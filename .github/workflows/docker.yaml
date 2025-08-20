@@ -24,3 +24,5 @@ jobs:
           context: .
           push: true
           tags: kdheeraj/sample_app:latest
+          no-cache: true
+
