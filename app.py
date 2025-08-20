@@ -1,8 +1,9 @@
 from flask import Flask, Response
 from tracker import get_portfolio_summary
+import os
 # test
 app = Flask(__name__)
- 
+print("‼ CMD is:", os.getenv("CMD_OVERRIDE", "gunicorn app:app"))
 @app.route("/")
 def summary():
     try:
