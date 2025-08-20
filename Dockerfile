@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 8080
 
 # Run the app with gunicorn (cloud-agnostic)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
