@@ -4,6 +4,4 @@ tabulate
 xirr
 flask
 gunicorn
-google.cloud
-functools
-utils
+google-cloud-storage
