@@ -15,6 +15,6 @@ COPY . .
 EXPOSE 8080
 
 # Run the app with gunicorn (cloud-agnostic)
-#ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
-CMD ["python", "app.py"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
+#CMD ["python", "app.py"]
 
