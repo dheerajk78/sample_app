@@ -70,7 +70,7 @@ def read_transactions(file_obj):
             'units': float(row['units']),
             'type': row.get('type', 'buy').lower()
         })
-        print transactions
+        print(transactions)
     return transactions
     
 # ==== FETCH LATEST NAV ====
