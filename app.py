@@ -31,3 +31,7 @@ def summary():
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     return upload_route()
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
