@@ -36,7 +36,7 @@ def upload_route():
             writer.writerow(row)
 
         bucket = storage_client.bucket(BUCKET_NAME)
-        blob = bucket.blob(CSV_NAME)
+        blob = bucket.blob(CSV_FILENAME)
         blob.upload_from_string(output_buffer.getvalue(), content_type="text/csv")
 
         #return f"✅ Uploaded successfully! {len(new_rows)} new rows added."
@@ -47,7 +47,7 @@ def upload_route():
 
 def load_existing_rows(storage_client):
     bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(CSV_NAME)
+    blob = bucket.blob(CSV_FILENAME)
     existing_rows = set()
     if blob.exists():
         content = blob.download_as_text()
