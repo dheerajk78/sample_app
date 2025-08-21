@@ -6,9 +6,7 @@ import os
 import csv
 import io
 
-print("requires_auth imported:", requires_auth)
-BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
-CSV_FILENAME = "transactions.csv"
+
 
 @requires_auth
 def upload_route():
@@ -17,11 +15,13 @@ def upload_route():
         if not file or not file.filename.endswith(".csv"):
             return "❌ Invalid file type. Only CSVs allowed."
 
+        BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
+        CSV_FILENAME = "transactions.csv"
         storage_client = storage.Client()
         existing_rows = load_existing_rows(storage_client)
 
         uploaded_rows = set()
-        reader = csv.reader(io.StringIO(file.read().decode('utf-8')))
+        reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
         for row in reader:
             uploaded_rows.add(tuple(row))
 
@@ -47,6 +47,8 @@ def upload_route():
 
 
 def load_existing_rows(storage_client):
+    BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
+    CSV_FILENAME = "transactions.csv"
     bucket = storage_client.bucket(BUCKET_NAME)
     blob = bucket.blob(CSV_FILENAME)
     existing_rows = set()
