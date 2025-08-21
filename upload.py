@@ -4,6 +4,7 @@ from functools import wraps
 from utils import requires_auth
 import os
 import csv
+import io
 
 print("requires_auth imported:", requires_auth)
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
