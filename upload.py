@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, redirect, url_for, render_template_string
+from flask import Flask, request, Response, redirect, url_for, render_template
 from google.cloud import storage
 from functools import wraps
 from utils import requires_auth
@@ -42,7 +42,7 @@ def upload_route():
         #return f"✅ Uploaded successfully! {len(new_rows)} new rows added."
         return redirect(url_for("summary", msg=f"{row_count} lines uploaded"))
 
-    return render_template_string("upload.html")
+    return render_template("upload.html")
 
 
 def load_existing_rows(storage_client):
