@@ -1,7 +1,7 @@
 from flask import Flask, request, Response, redirect, url_for, render_template_string
 from google.cloud import storage
 from functools import wraps
-from utils import check_auth
+from utils import requires_auth
 import os
 import csv
 
