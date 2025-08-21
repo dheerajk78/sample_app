@@ -4,12 +4,14 @@ from collections import defaultdict
 from decimal import Decimal
 from datetime import datetime
 from tabulate import tabulate
+from collections import defaultdict
+from typing import TextIO
 #from xirr import xirr as xirr_calc
 
-def get_portfolio_summary(csv_path: str = "transactions.csv") -> str:
-    transactions = read_transactions(csv_path)
-    return generate_summary(transactions)  # return string or dict
-
+def get_portfolio_summary(file_obj: TextIO) -> str:
+    transactions = read_transactions(file_obj)
+    return generate_summary(transactions)
+    
 # ==== UTILS ====
 def round2(x):
     return float(Decimal(x).quantize(Decimal('0.01')))
@@ -56,21 +58,20 @@ def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
 
 
 # ==== LOAD TRANSACTIONS ====
-def read_transactions(file_path):
+def read_transactions(file_obj):
     transactions = defaultdict(list)
-    with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            scheme_code = row['scheme_code']
-            transactions[scheme_code].append({
-                'date': row['date'],
-                'scheme_name': row['scheme_name'],
-                'nav': float(row['nav']),
-                'units': float(row['units']),
-                'type': row.get('type', 'buy').lower()
-            })
+    reader = csv.DictReader(file_obj)
+    for row in reader:
+        scheme_code = row['scheme_code']
+        transactions[scheme_code].append({
+            'date': row['date'],
+            'scheme_name': row['scheme_name'],
+            'nav': float(row['nav']),
+            'units': float(row['units']),
+            'type': row.get('type', 'buy').lower()
+        })
     return transactions
-
+    
 # ==== FETCH LATEST NAV ====
 def fetch_latest_nav(scheme_code):
     url = f"https://api.mfapi.in/mf/{scheme_code}/latest"
