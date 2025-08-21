@@ -10,7 +10,7 @@ BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
 CSV_FILENAME = "transactions.csv"
 
 @requires_auth
-def upload():
+def upload_route():
     if request.method == "POST":
         file = request.files["file"]
         if not file or not file.filename.endswith(".csv"):
