@@ -41,7 +41,7 @@ def upload_route():
         blob.upload_from_string(output_buffer.getvalue(), content_type="text/csv")
 
         #return f"✅ Uploaded successfully! {len(new_rows)} new rows added."
-        return redirect(url_for("summary", msg=f"{row_count} lines uploaded"))
+        return redirect(url_for("summary", msg=f"{len(new_rows)} lines uploaded"))
 
     return render_template("upload.html")
 
