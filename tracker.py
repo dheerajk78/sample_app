@@ -62,6 +62,7 @@ def read_transactions(file_obj):
     transactions = defaultdict(list)
     reader = csv.DictReader(file_obj)
     for row in reader:
+        print("Fieldnames:", reader.fieldnames)
         scheme_code = row['scheme_code']
         transactions[scheme_code].append({
             'date': row['date'],
