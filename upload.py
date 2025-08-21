@@ -5,6 +5,7 @@ from utils import requires_auth
 import os
 import csv
 
+print("requires_auth imported:", requires_auth)
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
 CSV_FILENAME = "transactions.csv"
 
