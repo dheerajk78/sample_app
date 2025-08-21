@@ -38,7 +38,8 @@ def upload():
         blob = bucket.blob(CSV_NAME)
         blob.upload_from_string(output_buffer.getvalue(), content_type="text/csv")
 
-        return f"✅ Uploaded successfully! {len(new_rows)} new rows added."
+        #return f"✅ Uploaded successfully! {len(new_rows)} new rows added."
+        return redirect(url_for("summary", msg=f"{row_count} lines uploaded"))
 
     return render_template_string("upload.html")
 
