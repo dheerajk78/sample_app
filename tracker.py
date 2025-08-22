@@ -71,7 +71,7 @@ def read_transactions(file_obj):
             'units': float(row['units']),
             'type': row.get('type', 'buy').lower()
         })
-        print(transactions)
+        
     return transactions
     
 # ==== FETCH LATEST NAV ====
@@ -186,8 +186,3 @@ def generate_summary(transactions):
     
     # Instead of print, return the string
     return summary_str
-
-# ==== MAIN ====
-if __name__ == "__main__":
-    transactions = read_transactions("transactions.csv")
-    generate_summary(transactions)
