@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Summary</title>
+</head>
+<body>
+    <h2>📊 Portfolio Summary</h2>
+    <pre>{{ summary_text }}</pre>
+
+    <form action="{{ url_for('upload_route') }}">
+        <button type="submit">⬆️ Upload New Transactions</button>
+    </form>
+
+    <hr>
+
+    <h3>📄 Existing Transactions</h3>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr>
+                {% for col in transaction_header %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in transaction_data %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
