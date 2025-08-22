@@ -13,7 +13,8 @@ def upload_route():
     if request.method == "POST":
         file = request.files["file"]
         if not file or not file.filename.endswith(".csv"):
-            return "❌ Invalid file type. Only CSVs allowed."
+            return redirect(url_for("summary", msg=f"❌ Invalid file type. Only CSVs allowed."))
+            #return "❌ Invalid file type. Only CSVs allowed."
 
         BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
         CSV_FILENAME = "transactions.csv"
@@ -24,7 +25,8 @@ def upload_route():
         reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
         header = next(reader, None)  # Read and store header
         if not header:
-            return "❌ Invalid or empty CSV file."
+            return redirect(url_for("summary", msg=f"❌ Invalid or empty CSV file."))
+            #return "❌ Invalid or empty CSV file."
 
         for row in reader:
             if row and any(cell.strip() for cell in row):
@@ -32,7 +34,8 @@ def upload_route():
 
         new_rows = uploaded_rows - existing_rows
         if not new_rows:
-            return "⚠️ No new rows found — all data is already uploaded."
+            return redirect(url_for("summary", msg=f"⚠️ No new rows found — all data is already uploaded."))
+            #return "⚠️ No new rows found — all data is already uploaded."
 
         merged_rows = existing_rows.union(new_rows)
 
