@@ -15,6 +15,7 @@ CSV_FILENAME = "transactions.csv"
 @app.route("/")
 def summary():
     try:
+        msg = request.args.get("msg")  # 👈 capture message from redirect
         page = int(request.args.get("page", 1))  # pagination: current page
         per_page = 20  # number of rows per page
 
@@ -63,7 +64,8 @@ def summary():
             transaction_header=transaction_header,
             transaction_data=paged_data,
             page=page,
-            total_pages=total_pages
+            total_pages=total_pages,
+            msg=msg
         )
 
     except Exception as e:
