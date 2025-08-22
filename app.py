@@ -5,7 +5,7 @@ from upload import upload_route
 import os
 import io
 import csv
-import datetime
+from datetime import datetime
 
 
 app = Flask(__name__)
