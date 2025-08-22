@@ -18,7 +18,7 @@ def upload_route():
         BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
         CSV_FILENAME = "transactions.csv"
         storage_client = storage.Client()
-        existing_rows = load_existing_rows(storage_client)
+        existing_header, existing_rows = load_existing_rows(storage_client)  # ✅ correct
 
         uploaded_rows = set()
         reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
