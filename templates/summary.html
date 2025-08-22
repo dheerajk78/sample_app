@@ -14,23 +14,36 @@
     <hr>
 
     <h3>📄 Existing Transactions</h3>
-    <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            {% for col in transaction_header %}
+                <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in transaction_data %}
             <tr>
-                {% for col in transaction_header %}
-                    <th>{{ col }}</th>
+                {% for cell in row %}
+                    <td>{{ cell }}</td>
                 {% endfor %}
             </tr>
-        </thead>
-        <tbody>
-            {% for row in transaction_data %}
-                <tr>
-                    {% for cell in row %}
-                        <td>{{ cell }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<div style="margin-top: 20px;">
+    {% if page > 1 %}
+        <a href="{{ url_for('summary', page=page-1) }}">⬅️ Previous</a>
+    {% endif %}
+    
+    <span>Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('summary', page=page+1) }}">Next ➡️</a>
+    {% endif %}
+</div>
 </body>
 </html>
