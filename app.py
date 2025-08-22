@@ -37,6 +37,18 @@ def summary():
         transaction_header = rows[0]
         transaction_data = rows[1:]
 
+        # Sort by date (assume "date" column is in DD-MM-YYYY format)
+        date_idx = transaction_header.index("date")
+
+        def parse_date(row):
+            try:
+                return datetime.strptime(row[date_idx], "%d-%m-%Y")
+            except ValueError:
+                return datetime.min  # fallback if invalid date
+
+        transaction_data.sort(key=parse_date, reverse=True)  # latest first
+
+
         total_rows = len(transaction_data)
         total_pages = (total_rows + per_page - 1) // per_page
         start = (page - 1) * per_page
