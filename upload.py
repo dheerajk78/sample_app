@@ -70,4 +70,4 @@ def load_existing_rows(storage_client):
             if row and any(cell.strip() for cell in row):
                 existing_rows.add(tuple(row))
 
-    return existing_header, existing_row
+    return existing_header, existing_rows
