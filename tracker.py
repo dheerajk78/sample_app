@@ -154,6 +154,8 @@ def generate_summary(transactions):
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
         pct_change = ((latest_nav - avg_nav) / avg_nav * 100) if avg_nav else 0
         pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
+        min_nav = min(navs) if navs else 0
+        max_nav = max(navs) if navs else 0
 
         # Add today's value to cash flows for XIRR
         cash_flows.append((today, current_value))
@@ -171,13 +173,15 @@ def generate_summary(transactions):
             round2(avg_nav),
             percent(pct_change),
             percent(pct_portfolio),
-            xirr_result
+            xirr_result,
+            f"{min_nav:,.2f}",
+            f"{max_nav:,.2f}"
         ])
 
     headers = [
         "Fund", "Latest NAV", "Units", "Invested ₹", "Current ₹",
         "Realized P/L", "Unrealized P/L", "Avg Purchase NAV",
-        "% Return", "% Portfolio", "XIRR"
+        "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
     ]
 
     print("\n📊 Portfolio Summary:\n")
