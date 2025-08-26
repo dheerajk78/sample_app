@@ -19,6 +19,23 @@ def round2(x):
 def percent(x):
     return f"{round2(x)}%"
 
+def format_in_indian_system(value):
+    if value >= 1e7:
+        return f"₹{value / 1e7:.2f} Cr"
+    elif value >= 1e5:
+        return f"₹{value / 1e5:.2f} L"
+    else:
+        return f"₹{value:,.2f}"
+
+def parse_indian_value(s):
+    s = s.replace("₹", "").strip()
+    if "Cr" in s:
+        return float(s.replace("Cr", "").strip()) * 1e7
+    elif "L" in s:
+        return float(s.replace("L", "").strip()) * 1e5
+    else:
+        return float(s.replace(",", ""))
+
 # ==== XIRR ====
 #def xirr(cash_flows, guess=0.1):
 #    from scipy.optimize import newton
@@ -166,10 +183,10 @@ def generate_summary(transactions):
             scheme_name,
             round2(latest_nav),
             round2(net_units),
-            f"{invested:,.2f}",
-            f"{current_value:,.2f}",
-            f"{realized_pl:,.2f}",
-            f"{unrealized_pl:,.2f}",
+            format_in_indian_system(invested),
+            format_in_indian_system(current_value),
+            format_in_indian_system(realized_pl),
+            format_in_indian_system(unrealized_pl),
             round2(avg_nav),
             percent(pct_change),
             percent(pct_portfolio),
@@ -185,6 +202,9 @@ def generate_summary(transactions):
     ]
 
     print("\n📊 Portfolio Summary:\n")
+    # Sort output_rows by Invested ₹ (column index 3), converting formatted strings to floats
+    output_rows.sort(key=lambda row: row: parse_indian_value(row[3]), reverse=True)
+
     print(tabulate(output_rows, headers=headers, tablefmt="grid"))
     summary_str = "\n📊 Portfolio Summary:\n\n" + tabulate(output_rows, headers=headers, tablefmt="grid")
     
