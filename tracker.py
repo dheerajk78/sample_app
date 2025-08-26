@@ -203,7 +203,7 @@ def generate_summary(transactions):
 
     print("\n📊 Portfolio Summary:\n")
     # Sort output_rows by Invested ₹ (column index 3), converting formatted strings to floats
-    output_rows.sort(key=lambda row: row: parse_indian_value(row[3]), reverse=True)
+    output_rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
 
     print(tabulate(output_rows, headers=headers, tablefmt="grid"))
     summary_str = "\n📊 Portfolio Summary:\n\n" + tabulate(output_rows, headers=headers, tablefmt="grid")
