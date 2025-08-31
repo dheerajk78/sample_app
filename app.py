@@ -1,23 +1,24 @@
-from flask import Flask, request, Response, render_template_string,render_template
+from flask import Flask, request, Response, redirect, url_for, render_template
 from google.cloud import storage
 from tracker import get_portfolio_summary
-from upload import upload_route
+from storage import get_storage_backend
+from storage.config import get_backend_type, set_backend_type
+from utils import requires_auth
 import os
 import io
 import csv
 from datetime import datetime
 
-
 app = Flask(__name__)
-BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
 CSV_FILENAME = "transactions.csv"
+BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
 
 @app.route("/")
 def summary():
     try:
-        msg = request.args.get("msg")  # 👈 capture message from redirect
-        page = int(request.args.get("page", 1))  # pagination: current page
-        per_page = 20  # number of rows per page
+        msg = request.args.get("msg")  # from redirect
+        page = int(request.args.get("page", 1))
+        per_page = 20
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(BUCKET_NAME)
@@ -26,31 +27,30 @@ def summary():
         if not blob.exists():
             return Response("⚠️ No transaction file found.", status=404)
 
-        # Read CSV
+        # Read file
         csv_data = blob.download_as_text()
         file_obj = io.StringIO(csv_data)
 
-        # Generate summary text
+        # Portfolio summary
         summary_text = get_portfolio_summary(file_obj)
 
-        # Read for table
+        # Read again for table
         file_obj.seek(0)
         reader = csv.reader(file_obj)
         rows = list(reader)
         transaction_header = rows[0]
         transaction_data = rows[1:]
 
-        # Sort by date (assume "date" column is in DD-MM-YYYY format)
+        # Sort by date column
         date_idx = transaction_header.index("date")
 
         def parse_date(row):
             try:
                 return datetime.strptime(row[date_idx], "%d-%m-%Y")
             except ValueError:
-                return datetime.min  # fallback if invalid date
+                return datetime.min
 
-        transaction_data.sort(key=parse_date, reverse=True)  # latest first
-
+        transaction_data.sort(key=parse_date, reverse=True)
 
         total_rows = len(transaction_data)
         total_pages = (total_rows + per_page - 1) // per_page
@@ -70,10 +70,52 @@ def summary():
 
     except Exception as e:
         return Response(f"❌ Error: {str(e)}", status=500)
-        
+
+
 @app.route("/upload", methods=["GET", "POST"])
+@requires_auth
 def upload():
-    return upload_route()
+    backend = get_storage_backend()
+
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file or not file.filename.endswith(".csv"):
+            return redirect(url_for("summary", msg="❌ Invalid file type. Only CSVs allowed."))
+
+        existing_header, existing_rows = backend.load_csv(CSV_FILENAME)
+
+        uploaded_rows = set()
+        reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
+        header = next(reader, None)
+        if not header:
+            return redirect(url_for("summary", msg="❌ Invalid or empty CSV file."))
+
+        for row in reader:
+            if row and any(cell.strip() for cell in row):
+                uploaded_rows.add(tuple(row))
+
+        new_rows = uploaded_rows - existing_rows
+        if not new_rows:
+            return redirect(url_for("summary", msg="⚠️ No new rows found — all data is already uploaded."))
+
+        merged_rows = existing_rows.union(new_rows)
+        backend.save_csv(CSV_FILENAME, header, merged_rows)
+
+        return redirect(url_for("summary", msg=f"✅ {len(new_rows)} lines uploaded"))
+
+    return render_template("upload.html")
+
+
+@app.route("/settings/backend", methods=["GET", "POST"])
+def backend_settings():
+    if request.method == "POST":
+        backend = request.json.get("backend")
+        if backend not in ["gcs", "firestore"]:
+            return jsonify({"error": "Invalid backend"}), 400
+        set_backend_type(backend)
+        return jsonify({"status": "updated", "backend": backend})
+    else:
+        return jsonify({"backend": get_backend_type()})
 
 
 if __name__ == "__main__":
