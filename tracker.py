@@ -1,85 +1,34 @@
+# tracker.py
 import csv
 import requests
 from collections import defaultdict
-from decimal import Decimal
 from datetime import datetime
 from tabulate import tabulate
-from collections import defaultdict
-from typing import TextIO
-#from xirr import xirr as xirr_calc
+from typing import IO
 
-def get_portfolio_summary(file_obj: TextIO) -> str:
-    transactions = read_transactions(file_obj)
-    return generate_summary(transactions)
+from utils import round2, percent, format_in_indian_system, parse_indian_value
+from storage import get_storage_backend
+
+def get_portfolio_summary(backend=None, filename="transactions.csv") -> str:
+    """
+    Loads data using the active backend and generates the summary string.
+    """
+    backend = backend or get_storage_backend()
+    header, rows = backend.load_csv(filename)
     
-# ==== UTILS ====
-def round2(x):
-    return float(Decimal(x).quantize(Decimal('0.01')))
+    if not header or not rows:
+        return "⚠️ No data found in transaction file."
 
-def percent(x):
-    return f"{round2(x)}%"
-
-def format_in_indian_system(value):
-    if value >= 1e7:
-        return f"₹{value / 1e7:.2f} Cr"
-    elif value >= 1e5:
-        return f"₹{value / 1e5:.2f} L"
-    else:
-        return f"₹{value:,.2f}"
-
-def parse_indian_value(s):
-    s = s.replace("₹", "").strip()
-    if "Cr" in s:
-        return float(s.replace("Cr", "").strip()) * 1e7
-    elif "L" in s:
-        return float(s.replace("L", "").strip()) * 1e5
-    else:
-        return float(s.replace(",", ""))
-
-# ==== XIRR ====
-#def xirr(cash_flows, guess=0.1):
-#    from scipy.optimize import newton
-#
-#    def xnpv(rate):
-#        return sum(cf / (1 + rate) ** ((date - cash_flows[0][0]).days / 365.0)
-#                   for date, cf in cash_flows)
-##
-#    try:
-#        return newton(xnpv, guess)
-#    except Exception:
-#        return None
+    # Convert set of tuples back to file-like CSV string for csv.DictReader
+    csv_content = ",".join(header) + "\n" + "\n".join([",".join(row) for row in rows])
+    from io import StringIO
+    return generate_summary(read_transactions(StringIO(csv_content)))
 
 
-def xirr(cash_flows):
-    # xirr package expects dict: {datetime: amount}
-    cf_dict = {dt: amt for dt, amt in cash_flows}
-    return xirr_calc(cf_dict)
-
-def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
-    def xnpv(rate):
-        return sum(cf / (1 + rate) ** ((date - cash_flows[0][0]).days / 365.0)
-                   for date, cf in cash_flows)
-
-    low = -0.9999  # Just above -100%
-    high = 10      # 1000% max upper bound
-    for _ in range(max_iterations):
-        mid = (low + high) / 2
-        npv = xnpv(mid)
-        if abs(npv) < tolerance:
-            return mid
-        if npv > 0:
-            low = mid
-        else:
-            high = mid
-    return None  # Didn't converge
-
-
-# ==== LOAD TRANSACTIONS ====
-def read_transactions(file_obj):
+def read_transactions(file_obj: IO):
     transactions = defaultdict(list)
     reader = csv.DictReader(file_obj)
     for row in reader:
-        print("Fieldnames:", reader.fieldnames)
         scheme_code = row['scheme_code']
         transactions[scheme_code].append({
             'date': row['date'],
@@ -88,10 +37,9 @@ def read_transactions(file_obj):
             'units': float(row['units']),
             'type': row.get('type', 'buy').lower()
         })
-        
     return transactions
-    
-# ==== FETCH LATEST NAV ====
+
+
 def fetch_latest_nav(scheme_code):
     url = f"https://api.mfapi.in/mf/{scheme_code}/latest"
     try:
@@ -102,13 +50,31 @@ def fetch_latest_nav(scheme_code):
         print(f"Error fetching NAV for {scheme_code}: {e}")
         return None
 
-# ==== GENERATE SUMMARY ====
+
+def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
+    def xnpv(rate):
+        return sum(cf / (1 + rate) ** ((date - cash_flows[0][0]).days / 365.0)
+                   for date, cf in cash_flows)
+
+    low = -0.9999
+    high = 10
+    for _ in range(max_iterations):
+        mid = (low + high) / 2
+        npv = xnpv(mid)
+        if abs(npv) < tolerance:
+            return mid
+        if npv > 0:
+            low = mid
+        else:
+            high = mid
+    return None
+
+
 def generate_summary(transactions):
     today = datetime.today()
     total_portfolio_value = 0
     latest_navs = {}
 
-    # Preload NAVs and total value
     for scheme_code, txns in transactions.items():
         latest_nav = fetch_latest_nav(scheme_code)
         if latest_nav is None:
@@ -125,14 +91,11 @@ def generate_summary(transactions):
         if latest_nav is None:
             continue
 
-        # Variables
         net_units = 0
         invested = 0
         realized_pl = 0
         cash_flows = []
         navs = []
-
-        # FIFO stack for buy lots
         buy_lots = []
 
         for t in sorted(txns, key=lambda x: x['date']):
@@ -165,7 +128,6 @@ def generate_summary(transactions):
                         lot['units'] -= remaining_to_sell
                         remaining_to_sell = 0
 
-        # Remaining investment value
         current_value = net_units * latest_nav
         unrealized_pl = current_value - sum(lot['units'] * lot['nav'] for lot in buy_lots)
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
@@ -174,7 +136,6 @@ def generate_summary(transactions):
         min_nav = min(navs) if navs else 0
         max_nav = max(navs) if navs else 0
 
-        # Add today's value to cash flows for XIRR
         cash_flows.append((today, current_value))
         rate = xirr(cash_flows)
         xirr_result = percent(rate * 100) if rate else "N/A"
@@ -201,12 +162,6 @@ def generate_summary(transactions):
         "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
     ]
 
-    print("\n📊 Portfolio Summary:\n")
-    # Sort output_rows by Invested ₹ (column index 3), converting formatted strings to floats
     output_rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
-
-    print(tabulate(output_rows, headers=headers, tablefmt="grid"))
     summary_str = "\n📊 Portfolio Summary:\n\n" + tabulate(output_rows, headers=headers, tablefmt="grid")
-    
-    # Instead of print, return the string
     return summary_str
