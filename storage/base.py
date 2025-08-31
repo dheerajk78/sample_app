@@ -1,12 +1,14 @@
-class StorageBackend:
-    def get_transactions(self):
-        """
-        Should return (header, rows)
-        """
-        raise NotImplementedError("Subclasses must implement get_transactions()")
+# storage/base.py
 
-    def save_transactions(self, header, rows):
-        """
-        Should accept header (list[str]) and rows (list[list[str]])
-        """
-        raise NotImplementedError("Subclasses must implement save_transactions()")
+from abc import ABC, abstractmethod
+
+class StorageBackend(ABC):
+    @abstractmethod
+    def load_csv(self, filename: str):
+        """Load CSV file and return header and a set of unique rows"""
+        pass
+
+    @abstractmethod
+    def save_csv(self, filename: str, header, rows: set):
+        """Save header and rows to CSV file"""
+        pass
