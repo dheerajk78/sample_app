@@ -1,7 +1,8 @@
 # requirements.txt
+flask
+gunicorn
 requests
 tabulate
 xirr
-flask
-gunicorn
 google-cloud-storage
+google-cloud-firestore
