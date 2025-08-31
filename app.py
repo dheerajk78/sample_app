@@ -1,4 +1,5 @@
 from flask import Flask, request, Response, redirect, url_for, render_template
+from storage import get_storage_backend
 from google.cloud import storage
 from tracker import get_portfolio_summary
 from storage import get_storage_backend
@@ -32,7 +33,9 @@ def summary():
         file_obj = io.StringIO(csv_data)
 
         # Portfolio summary
-        summary_text = get_portfolio_summary(file_obj)
+        #summary_text = get_portfolio_summary(file_obj)
+        summary_text = get_portfolio_summary(get_storage_backend(), filename=CSV_FILENAME)
+
 
         # Read again for table
         file_obj.seek(0)
