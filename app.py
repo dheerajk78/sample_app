@@ -4,6 +4,7 @@ from google.cloud import storage
 from tracker import get_portfolio_summary
 from storage import get_storage_backend
 from storage.config import get_backend_type, set_backend_type
+from settings_manager import get_backend_toggle, set_backend_toggle
 from utils import requires_auth
 import os
 import io
@@ -110,15 +111,15 @@ def upload():
 
 
 @app.route("/settings/backend", methods=["GET", "POST"])
-def backend_settings():
+def settings():
     if request.method == "POST":
-        backend = request.json.get("backend")
-        if backend not in ["gcs", "firestore"]:
-            return jsonify({"error": "Invalid backend"}), 400
-        set_backend_type(backend)
-        return jsonify({"status": "updated", "backend": backend})
-    else:
-        return jsonify({"backend": get_backend_type()})
+        backend = request.form.get("backend")
+        if backend in ["gcs", "firestore"]:
+            set_backend_toggle(backend)
+        return redirect(url_for("settings"))
+
+    current_backend = get_backend_toggle()
+    return render_template("settings.html", current_backend=current_backend)
 
 
 if __name__ == "__main__":
