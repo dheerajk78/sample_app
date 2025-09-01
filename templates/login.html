@@ -1,5 +1,5 @@
 <h2>🔐 Login</h2>
-<form method="POST">
+<form method="POST" action="{{ url_for('login', next=request.args.get('next')) }}">
     <label>Username:</label><br>
     <input type="text" name="username"><br><br>
     
