@@ -1,9 +1,9 @@
-from flask import Blueprint, request, session, redirect, url_for, flash, render_template
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
 import os
 
 auth_bp = Blueprint("auth", __name__)
-VALID_USERNAME = os.environ.get("UPLOAD_USER", "admin")
-VALID_PASSWORD = os.environ.get("UPLOAD_PASS", "secret")
+VALID_USERNAME = current_app.config["USERNAME"]
+VALID_PASSWORD = current_app.config["PASSWORD"]
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
