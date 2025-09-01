@@ -69,7 +69,8 @@ def summary():
             transaction_data=paged_data,
             page=page,
             total_pages=total_pages,
-            msg=msg
+            msg=msg,
+            backend_type=get_backend_type()
         )
 
     except Exception as e:
