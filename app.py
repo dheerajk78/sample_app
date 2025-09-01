@@ -2,9 +2,7 @@ from flask import Flask, request, Response, redirect, url_for, render_template, 
 from storage import get_storage_backend
 from google.cloud import storage
 from tracker import get_portfolio_summary
-from storage import get_storage_backend
 from storage.config import get_backend_type, set_backend_type
-from settings_manager import get_backend_toggle, set_backend_toggle
 from datetime import timedelta
 from utils import requires_auth, login_required
 import os
@@ -80,7 +78,7 @@ def summary():
             page=page,
             total_pages=total_pages,
             msg=msg,
-            backend_type=get_backend_toggle()
+            backend_type=get_backend_type()
         )
 
     except Exception as e:
@@ -126,10 +124,10 @@ def settings():
     if request.method == "POST":
         backend = request.form.get("backend")
         if backend in ["gcs", "firestore"]:
-            set_backend_toggle(backend)
+            set_backend_type(backend)
         return redirect(url_for("summary"))
 
-    current_backend = get_backend_toggle()
+    current_backend = get_backend_type()
     return render_template("settings.html", current_backend=current_backend)
 
 @app.route("/login", methods=["GET", "POST"])
