@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, Response
+from flask import Blueprint, request, render_template, redirect, url_for, Response,current_app
 from utils.auth import login_required
 from storage import get_storage_backend
 from tracker import get_portfolio_summary
@@ -6,6 +6,7 @@ import io, csv
 from datetime import datetime
 
 main_bp = Blueprint("main", __name__)
+CSV_FILENAME=current_app.config["CSV_FILENAME"]
 
 @main_bp.route("/")
 def summary():
@@ -15,7 +16,7 @@ def summary():
         page = int(request.args.get("page", 1))
         per_page = 20
 
-        header, rows = backend.load_csv("transactions.csv")
+        header, rows = backend.load_csv(CSV_FILENAME)
         if not rows:
             return Response("⚠️ No transaction file found.", status=404)
 
@@ -31,7 +32,7 @@ def summary():
         total_rows = len(rows)
         paged_data = rows[(page-1)*per_page:page*per_page]
 
-        summary_text = get_portfolio_summary(backend, filename="transactions.csv")
+        summary_text = get_portfolio_summary(backend, filename=CSV_FILENAME)
 
         return render_template("summary.html", summary_text=summary_text,
                                transaction_header=header, transaction_data=paged_data,
@@ -51,7 +52,7 @@ def upload():
         if not file or not file.filename.endswith(".csv"):
             return redirect(url_for("main.summary", msg="❌ Invalid file type."))
 
-        existing_header, existing_rows = backend.load_csv("transactions.csv")
+        existing_header, existing_rows = backend.load_csv(CSV_FILENAME)
         uploaded_rows = set()
         reader = csv.reader(io.StringIO(file.read().decode("utf-8-sig")))
         header = next(reader, None)
@@ -63,6 +64,6 @@ def upload():
         if not new_rows:
             return redirect(url_for("main.summary", msg="⚠️ No new rows found."))
 
-        backend.save_csv("transactions.csv", header, existing_rows.union(new_rows))
+        backend.save_csv(CSV_FILENAME, header, existing_rows.union(new_rows))
         return redirect(url_for("main.summary", msg=f"✅ {len(new_rows)} lines uploaded"))
     return render_template("upload.html")
