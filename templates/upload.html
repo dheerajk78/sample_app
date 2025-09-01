@@ -2,4 +2,11 @@
 <form method="POST" enctype="multipart/form-data">
   <input type="file" name="file" accept=".csv" required>
   <input type="submit" value="Upload">
+<div style="display: flex; gap: 10px;">
+        <input type="submit" value="Upload">
+        <a href="{{ url_for('summary') }}">
+            <button type="button">❌ Cancel</button>
+        </a>
+    </div>
+
 </form>
