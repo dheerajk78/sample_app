@@ -5,6 +5,7 @@ from tracker import get_portfolio_summary
 from storage import get_storage_backend
 from storage.config import get_backend_type, set_backend_type
 from settings_manager import get_backend_toggle, set_backend_toggle
+from datetime import timedelta
 from utils import requires_auth
 import os
 import io
@@ -14,6 +15,12 @@ from datetime import datetime
 app = Flask(__name__)
 CSV_FILENAME = "transactions.csv"
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
+
+# Below is to enforce session logout after inactivity
+app.permanent_session_lifetime = timedelta(minutes=5)
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 @app.route("/")
 def summary():
