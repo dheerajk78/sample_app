@@ -1,15 +1,16 @@
-# storage/config.py
-import json
-import os
+# settings_manager.py
+from google.cloud import firestore
 
-CONFIG_FILE = "settings.json"
+FIRESTORE_COLLECTION = "settings"
+FIRESTORE_DOC_ID = "storage_backend"
 
-def get_backend_type():
-    if not os.path.exists(CONFIG_FILE):
-        return "gcs"
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f).get("backend", "gcs")
+def get_backend_toggle():
+    db = firestore.Client()
+    doc = db.collection(FIRESTORE_COLLECTION).document(FIRESTORE_DOC_ID).get()
+    if doc.exists:
+        return doc.to_dict().get("backend", "gcs")
+    return "gcs"  # fallback default
 
-def set_backend_type(backend_type: str):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump({"backend": backend_type}, f)
+def set_backend_toggle(value):
+    db = firestore.Client()
+    db.collection(FIRESTORE_COLLECTION).document(FIRESTORE_DOC_ID).set({"backend": value})
