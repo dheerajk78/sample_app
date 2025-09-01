@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, redirect, url_for, render_template
+from flask import Flask, request, Response, redirect, url_for, render_template, session, flash
 from storage import get_storage_backend
 from google.cloud import storage
 from tracker import get_portfolio_summary
@@ -6,15 +6,18 @@ from storage import get_storage_backend
 from storage.config import get_backend_type, set_backend_type
 from settings_manager import get_backend_toggle, set_backend_toggle
 from datetime import timedelta
-from utils import requires_auth
+from utils import requires_auth, login_required
 import os
 import io
 import csv
 from datetime import datetime
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")  # 🔐 use a strong key in prod
 CSV_FILENAME = "transactions.csv"
 BUCKET_NAME = os.environ.get("BUCKET_NAME", "your-bucket-name")
+VALID_USERNAME = os.environ.get("UPLOAD_USER", "admin")
+VALID_PASSWORD = os.environ.get("UPLOAD_PASS", "secret")
 
 # Below is to enforce session logout after inactivity
 app.permanent_session_lifetime = timedelta(minutes=5)
@@ -85,7 +88,7 @@ def summary():
 
 
 @app.route("/upload", methods=["GET", "POST"])
-@requires_auth
+@login_required
 def upload():
     backend = get_storage_backend()
 
@@ -117,7 +120,7 @@ def upload():
 
     return render_template("upload.html")
 
-
+@login_required
 @app.route("/settings/backend", methods=["GET", "POST"])
 def settings():
     if request.method == "POST":
@@ -129,6 +132,21 @@ def settings():
     current_backend = get_backend_toggle()
     return render_template("settings.html", current_backend=current_backend)
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username == VALID_USERNAME and password == VALID_PASSWORD:
+            session["user"] = username
+            return redirect(url_for("summary"))  # redirect after login
+        flash("Invalid credentials", "error")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect(url_for("login"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
