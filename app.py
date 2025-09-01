@@ -1,10 +1,11 @@
 from flask import Flask
+from config import Config
 from routes.main import main_bp
 from routes.auth import auth_bp
 from routes.settings import settings_bp
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # Replace in prod
+app.config.from_object(Config) #Load the config object and use it within BP's using current_app
 
 # Register Blueprints
 app.register_blueprint(main_bp)
