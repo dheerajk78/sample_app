@@ -148,7 +148,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.pop("user", None)
-    return redirect(url_for("login"))
+    return redirect(url_for("summary"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
