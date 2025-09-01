@@ -17,6 +17,13 @@
         <button type="submit">⬆️ Upload New Transactions</button>
     </form>
 
+  <p style="font-size: 14px; color: #888;">
+    📦 Current Storage Backend: <strong>{{ backend_type }}</strong>
+  </p>
+    <form action="{{ url_for('setting') }}">
+        <button type="submit">⬆️ Switch backend</button>
+    </form>
+
     <hr>
 
     <h3>📄 Existing Transactions</h3>
