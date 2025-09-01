@@ -70,7 +70,7 @@ def summary():
             page=page,
             total_pages=total_pages,
             msg=msg,
-            backend_type=get_backend_type()
+            backend_type=get_backend_toggle()
         )
 
     except Exception as e:
@@ -117,7 +117,7 @@ def settings():
         backend = request.form.get("backend")
         if backend in ["gcs", "firestore"]:
             set_backend_toggle(backend)
-        return redirect(url_for("settings"))
+        return redirect(url_for("summary"))
 
     current_backend = get_backend_toggle()
     return render_template("settings.html", current_backend=current_backend)
