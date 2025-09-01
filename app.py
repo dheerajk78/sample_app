@@ -120,8 +120,8 @@ def upload():
 
     return render_template("upload.html")
 
-@login_required
 @app.route("/settings/backend", methods=["GET", "POST"])
+@login_required
 def settings():
     if request.method == "POST":
         backend = request.form.get("backend")
@@ -139,6 +139,8 @@ def login():
         password = request.form.get("password")
         if username == VALID_USERNAME and password == VALID_PASSWORD:
             session["user"] = username
+            next_url = request.args.get("next") or url_for("summary")
+            return redirect(next_url)
             return redirect(url_for("summary"))  # redirect after login
         flash("Invalid credentials", "error")
     return render_template("login.html")
