@@ -1,6 +1,6 @@
 # utils.py
 from functools import wraps
-from flask import request, Response
+from flask import request, Response, session, redirect, url_for
 from decimal import Decimal
 import os
 
@@ -10,7 +10,7 @@ def check_auth(username, password):
     expected_pass = os.environ.get("UPLOAD_PASS", "secret")
     return username == expected_user and password == expected_pass
 
-# Decorator to protect routes
+# Decorator to protect routes via Basic Auth.
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -23,6 +23,14 @@ def requires_auth(f):
             )
         return f(*args, **kwargs)
     return decorated
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login", next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def round2(x):
     return float(Decimal(x).quantize(Decimal('0.01')))
