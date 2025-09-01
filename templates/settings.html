@@ -3,5 +3,10 @@
     <label>Select Storage Backend:</label><br>
     <input type="radio" name="backend" value="gcs" {% if current_backend == "gcs" %}checked{% endif %}> GCS<br>
     <input type="radio" name="backend" value="firestore" {% if current_backend == "firestore" %}checked{% endif %}> Firestore<br><br>
-    <input type="submit" value="Save">
+    <div style="display: flex; gap: 10px;">
+        <input type="submit" value="💾 Save">
+        <a href="{{ url_for('summary') }}">
+            <button type="button">❌ Cancel</button>
+        </a>
+    </div>
 </form>
