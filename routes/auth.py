@@ -2,11 +2,11 @@ from flask import Blueprint, request, session, redirect, url_for, flash, render_
 import os
 
 auth_bp = Blueprint("auth", __name__)
-VALID_USERNAME = current_app.config["USERNAME"]
-VALID_PASSWORD = current_app.config["PASSWORD"]
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    VALID_USERNAME = current_app.config["USERNAME"]
+    VALID_PASSWORD = current_app.config["PASSWORD"]
     if request.method == "POST":
         if request.form.get("username") == VALID_USERNAME and request.form.get("password") == VALID_PASSWORD:
             session["user"] = VALID_USERNAME
