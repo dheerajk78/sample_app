@@ -22,7 +22,7 @@
         📦 Current Storage Backend: <strong>{{ backend_type }}</strong>
     </p>
 
-    <form action="{{ url_for('settings') }}" method="get">
+    <form action="{{ url_for('settings.backend') }}" method="get">
         <button type="submit">⚙️ Switch Backend</button>
     </form>
 {% if session.get('user') %}
