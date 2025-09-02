@@ -84,7 +84,7 @@ def upload():
     if request.method == "POST":
         file = request.files.get("file")
         if not file or not file.filename.endswith(".csv"):
-            return redirect(url_for("summary", msg="❌ Invalid file type. Only CSVs allowed."))
+            return redirect(url_for("main.summary", msg="❌ Invalid file type. Only CSVs allowed."))
 
         existing_header, existing_rows = backend.load_csv(CSV_FILENAME)
 
@@ -92,7 +92,7 @@ def upload():
         reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
         header = next(reader, None)
         if not header:
-            return redirect(url_for("summary", msg="❌ Invalid or empty CSV file."))
+            return redirect(url_for("main.summary", msg="❌ Invalid or empty CSV file."))
 
         for row in reader:
             if row and any(cell.strip() for cell in row):
@@ -100,11 +100,11 @@ def upload():
 
         new_rows = uploaded_rows - existing_rows
         if not new_rows:
-            return redirect(url_for("summary", msg="⚠️ No new rows found — all data is already uploaded."))
+            return redirect(url_for("main.summary", msg="⚠️ No new rows found — all data is already uploaded."))
 
         merged_rows = existing_rows.union(new_rows)
         backend.save_csv(CSV_FILENAME, header, merged_rows)
 
-        return redirect(url_for("summary", msg=f"✅ {len(new_rows)} lines uploaded"))
+        return redirect(url_for("main.summary", msg=f"✅ {len(new_rows)} lines uploaded"))
 
     return render_template("upload.html")
