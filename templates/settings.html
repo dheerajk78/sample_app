@@ -5,7 +5,7 @@
     <input type="radio" name="backend" value="firestore" {% if current_backend == "firestore" %}checked{% endif %}> Firestore<br><br>
     <div style="display: flex; gap: 10px;">
         <input type="submit" value="💾 Save">
-        <a href="{{ url_for('summary') }}">
+        <a href="{{ url_for('main.summary') }}">
             <button type="button">❌ Cancel</button>
         </a>
     </div>
