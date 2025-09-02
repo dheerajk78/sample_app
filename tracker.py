@@ -7,7 +7,7 @@ from tabulate import tabulate
 from typing import IO
 
 from utils import round2, percent, format_in_indian_system, parse_indian_value
-from storage import get_storage_backend
+from storage.config import get_storage_backend
 
 def get_portfolio_summary(backend=None, filename="transactions.csv") -> str:
     """
