@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, Respon
 from routes.auth import login_required
 from storage import get_storage_backend
 from tracker import get_portfolio_summary
+from storage.config import get_backend_type
 from google.cloud import storage
 import io, csv
 from datetime import datetime
