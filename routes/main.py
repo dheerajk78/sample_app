@@ -6,8 +6,6 @@ import io, csv
 from datetime import datetime
 
 main_bp = Blueprint("main", __name__)
-CSV_FILENAME=current_app.config["CSV_FILENAME"]
-BUCKET_NAME=current_app.config["BUCKET_NAME"]
 
 @main_bp.route("/")
 def summary():
