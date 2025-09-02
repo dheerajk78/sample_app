@@ -6,3 +6,4 @@ It provides an option to upload CSV file with transactions and is protected by a
 It utilizes Flask session-based authentication.
 Application also displays the list of transactions with pagination.
 modularized.
+..
