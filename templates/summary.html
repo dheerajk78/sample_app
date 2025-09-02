@@ -63,13 +63,13 @@
 <!-- Pagination Controls -->
 <div style="margin-top: 20px;">
     {% if page > 1 %}
-        <a href="{{ url_for('summary', page=page-1) }}">⬅️ Previous</a>
+        <a href="{{ url_for('main.summary', page=page-1) }}">⬅️ Previous</a>
     {% endif %}
     
     <span>Page {{ page }} of {{ total_pages }}</span>
 
     {% if page < total_pages %}
-        <a href="{{ url_for('summary', page=page+1) }}">Next ➡️</a>
+        <a href="{{ url_for('main.summary', page=page+1) }}">Next ➡️</a>
     {% endif %}
 </div>
 </body>
