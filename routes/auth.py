@@ -1,4 +1,6 @@
-from flask import Blueprint, wraps, request, session, redirect, url_for, flash, render_template, current_app
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
+from functools import wraps
+
 import os
 
 auth_bp = Blueprint("auth", __name__)
