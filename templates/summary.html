@@ -14,7 +14,7 @@
     <pre>{{ summary_text }}</pre>
 
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
-    <form action="{{ url_for('upload') }}" method="get">
+    <form action="{{ url_for('main.upload') }}" method="get">
         <button type="submit">⬆️ Upload New Transactions</button>
     </form>
 
@@ -28,11 +28,11 @@
 {% if session.get('user') %}
     <p>
         Logged in as <strong>{{ session.get('user') }}</strong>
-        | <a href="{{ url_for('logout') }}">Logout</a>
+        | <a href="{{ url_for('auth.logout') }}">Logout</a>
     </p>
 {% else %}
      <p>
-        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('auth.login') }}">Login</a>
     </p>
 {% endif %}
 
