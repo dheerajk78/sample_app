@@ -12,6 +12,8 @@ BUCKET_NAME=current_app.config["BUCKET_NAME"]
 @main_bp.route("/")
 def summary():
     backend = get_storage_backend()
+    CSV_FILENAME=current_app.config["CSV_FILENAME"]
+    BUCKET_NAME=current_app.config["BUCKET_NAME"]
     try:
         msg = request.args.get("msg")  # from redirect
         page = int(request.args.get("page", 1))
@@ -76,6 +78,8 @@ def summary():
 def upload():
     from flask import request
     backend = get_storage_backend()
+    CSV_FILENAME=current_app.config["CSV_FILENAME"]
+    BUCKET_NAME=current_app.config["BUCKET_NAME"]
 
     if request.method == "POST":
         file = request.files.get("file")
