@@ -1,5 +1,5 @@
 from flask import Blueprint, request, redirect, url_for, render_template, current_app
-from utils.auth import login_required
+from routes.auth import login_required
 from storage.config import get_backend_type, set_backend_type
 
 settings_bp = Blueprint("settings", __name__)
