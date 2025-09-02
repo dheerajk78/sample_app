@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, redirect, url_for, Response,current_app
-from routes import login_required
+from routes.auth import login_required
 from storage import get_storage_backend
 from tracker import get_portfolio_summary
 import io, csv
