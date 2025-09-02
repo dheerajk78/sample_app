@@ -5,3 +5,4 @@ Backend storage can be switched between GCS and Firestore and is protected by ad
 It provides an option to upload CSV file with transactions and is protected by admin credentials.
 It utilizes Flask session-based authentication.
 Application also displays the list of transactions with pagination.
+modularized.
