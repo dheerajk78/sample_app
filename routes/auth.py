@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
+from flask import Blueprint, wraps, request, session, redirect, url_for, flash, render_template, current_app
 import os
 
 auth_bp = Blueprint("auth", __name__)
@@ -18,3 +18,11 @@ def login():
 def logout():
     session.pop("user", None)
     return redirect(url_for("main.summary"))
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login", next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
