@@ -5,7 +5,14 @@ from routes.auth import auth_bp
 from routes.settings import settings_bp
 
 app = Flask(__name__)
-app.config.from_object(Config) #Load the config object and use it within BP's using current_app
+
+#Load the config object and use it within BP's using current_app
+app.config.from_object(Config) 
+
+# Below is to enforce session logout after inactivity
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 # Register Blueprints
 app.register_blueprint(main_bp)
