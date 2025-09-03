@@ -20,7 +20,7 @@ def get_portfolio_summary(backend=None, filename="transactions.csv") -> str:
         return "⚠️ No data found in transaction file."
 
     csv_content = ",".join(header) + "\n" + "\n".join([",".join(row) for row in rows])
-    return generate_summary(read_transactions(StringIO(csv_content)))
+    return generate_summary_html(read_transactions(StringIO(csv_content)))
 
 
 def read_transactions(file_obj: IO):
