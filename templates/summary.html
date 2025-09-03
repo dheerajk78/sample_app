@@ -39,7 +39,7 @@
     <!-- <div>
     {{ summary_text | safe }}
     </div> -->
-<!-- {% for asset_type, data in summary_data.items() %}
+{% for asset_type, data in summary_data.items() %}
 <details open>
   <summary style="font-weight: bold; font-size: 1.1em;">
     {{ data.display_name }} ({{ data.currency }})
@@ -98,7 +98,7 @@
 </details>
 
 <br>
-{% endfor %} -->
+{% endfor %} 
   <h2>📊 Portfolio Summary</h2>
 
 {% for asset_type, data in summary_data.items() %}
@@ -128,7 +128,7 @@
             <tbody>
                 <!-- Total row (always visible) -->
                 <tr style="background-color: #f2f2f2;">
-                    {% for cell in data.total_row %}
+                    {% for cell in data.totals %}
                         <td><strong>{{ cell }}</strong></td>
                     {% endfor %}
                 </tr>
