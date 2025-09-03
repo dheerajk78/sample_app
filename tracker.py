@@ -254,6 +254,14 @@ def generate_summary_data(transactions):
     latest_prices = {}
     total_portfolio_value = 0
 
+   # Map asset_type to currency symbol
+    currency_map = {
+        "mutual_fund": "₹",
+        "indian_equity": "₹",
+        "aus_equity": "A$",
+        # add others if needed
+    }
+
     summary_data = defaultdict(lambda: {
         "rows": [],
         "totals": {
@@ -261,7 +269,8 @@ def generate_summary_data(transactions):
             "current": 0,
             "realized": 0,
             "unrealized": 0
-        }
+        },
+        "currency": "₹"  # default currency, can override below
     })
 
     # 1. Get total portfolio value (used for % allocation)
@@ -271,6 +280,9 @@ def generate_summary_data(transactions):
         latest_price = fetch_latest_price(asset_type, scheme_code)
         if latest_price is None:
             continue
+        
+        
+        
         net_units = sum(t["units"] if t["type"] == "buy" else -t["units"] for t in txns)
         total_portfolio_value += net_units * latest_price
         latest_prices[scheme_code] = latest_price
@@ -284,6 +296,9 @@ def generate_summary_data(transactions):
         if latest_price is None:
             continue
 
+        # Override currency for this asset_type if mapped
+        summary_data[asset_type]["currency"] = currency_map.get(asset_type, "₹")
+        
         net_units = 0
         invested = 0
         realized_pl = 0
