@@ -75,6 +75,11 @@ def generate_summary(transactions):
     total_portfolio_value = 0
     latest_navs = {}
 
+    total_invested = 0
+    total_current = 0
+    total_realized = 0
+    total_unrealized = 0
+
     for scheme_code, txns in transactions.items():
         latest_nav = fetch_latest_nav(scheme_code)
         if latest_nav is None:
