@@ -48,8 +48,16 @@ def fetch_latest_price(asset_type, scheme_code):
 
         elif asset_type in ('indian_equity', 'aus_equity'):
             ticker = yf.Ticker(scheme_code)
-            price = ticker.history(period='1d')['Close'][-1]
-            return float(price)
+            hist = ticker.history(period="5d")
+            if not hist.empty:
+                return float(hist["Close"][-1])
+            
+            # fallback scrape
+            price = fetch_price_yahoo_fallback(scheme_code)
+            if price:
+                return price
+
+            print(f"[YahooFinance] No price data found for {scheme_code}")
 
         else:
             print(f"Unknown asset_type: {asset_type}")
@@ -58,6 +66,21 @@ def fetch_latest_price(asset_type, scheme_code):
         print(f"Error fetching price for {scheme_code} ({asset_type}): {e}")
         return None
 
+def fetch_price_yahoo_fallback(symbol):
+    url = f"https://au.finance.yahoo.com/quote/{symbol}"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    resp = requests.get(url, headers=headers)
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    # Find the span that holds the current price (this selector may change over time)
+    price_span = soup.find("fin-streamer", {"data-field": "regularMarketPrice"})
+    if price_span:
+        try:
+            price = float(price_span.text.replace(',', ''))
+            return price
+        except Exception:
+            pass
+    return None
 
 def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
     def xnpv(rate):
