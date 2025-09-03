@@ -76,10 +76,10 @@ def summary():
 @main_bp.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload():
-    from flask import request
+    from flask import request, current_app
     backend = get_storage_backend()
-    CSV_FILENAME=current_app.config["CSV_FILENAME"]
-    BUCKET_NAME=current_app.config["BUCKET_NAME"]
+    CSV_FILENAME = current_app.config["CSV_FILENAME"]
+    BUCKET_NAME = current_app.config["BUCKET_NAME"]
 
     if request.method == "POST":
         file = request.files.get("file")
@@ -88,15 +88,28 @@ def upload():
 
         existing_header, existing_rows = backend.load_csv(CSV_FILENAME)
 
-        uploaded_rows = set()
-        reader = csv.reader(io.StringIO(file.read().decode('utf-8-sig')))
+        file_data = file.read().decode('utf-8-sig')
+        reader = csv.reader(io.StringIO(file_data))
         header = next(reader, None)
+
         if not header:
             return redirect(url_for("main.summary", msg="❌ Invalid or empty CSV file."))
 
+        # Ensure asset_type exists in the header
+        if "asset_type" not in header:
+            header.append("asset_type")
+            add_default_asset_type = True
+        else:
+            add_default_asset_type = False
+
+        uploaded_rows = set()
         for row in reader:
-            if row and any(cell.strip() for cell in row):
-                uploaded_rows.add(tuple(row))
+            if not any(cell.strip() for cell in row):
+                continue
+
+            if add_default_asset_type:
+                row.append("mutual_fund")
+            uploaded_rows.add(tuple(row))
 
         new_rows = uploaded_rows - existing_rows
         if not new_rows:
