@@ -99,58 +99,49 @@ def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
             high = mid
     return None
 
-
-def generate_summary(transactions):
+def format_currency(value, asset_type):
+    if asset_type in ('mutual_fund', 'indian_equity'):
+        return format_in_indian_system(value)
+    elif asset_type == 'aus_equity':
+        return format_in_aud_system(value)
+    else:
+        return f"{value:,.2f}"
+        
+def generate_summary_html(transactions):
     today = datetime.today()
-    total_portfolio_value = 0
     latest_navs = {}
-
-    # Store results by asset_type
-    grouped_output = defaultdict(list)
+    grouped_data = defaultdict(list)
     totals_by_type = defaultdict(lambda: {
-        "invested": 0,
-        "current": 0,
-        "realized": 0,
-        "unrealized": 0,
-        "portfolio_value": 0
+        "invested": 0, "current": 0, "realized": 0,
+        "unrealized": 0, "portfolio_value": 0
     })
 
-    # First, calculate total portfolio value (needed for % portfolio calculation)
+    # Pre-fetch NAVs and compute total portfolio value
+    total_portfolio_value = 0
     for scheme_code, txns in transactions.items():
         asset_type = txns[0].get('asset_type', 'unknown')
-        latest_nav = fetch_latest_price(asset_type, scheme_code.strip())
+        scheme_code = scheme_code.strip()
+        latest_nav = fetch_latest_price(asset_type, scheme_code)
         if latest_nav is None:
             continue
         net_units = sum(t['units'] if t['type'] == 'buy' else -t['units'] for t in txns)
         total_portfolio_value += net_units * latest_nav
         latest_navs[scheme_code] = latest_nav
 
-    # Now process each scheme grouped by asset_type
+    # Process each scheme
     for scheme_code, txns in transactions.items():
         asset_type = txns[0].get('asset_type', 'unknown')
         scheme_name = txns[0]['scheme_name']
-        latest_nav = latest_navs.get(scheme_code)
+        latest_nav = latest_navs.get(scheme_code.strip())
         if latest_nav is None:
             continue
 
-        net_units = 0
-        invested = 0
-        realized_pl = 0
-        cash_flows = []
-        navs = []
-        buy_lots = []
-
-         # Choose currency symbol
-        if asset_type == "aus_equity":
-            currency_symbol = "A$"
-        else:
-            currency_symbol = "₹"
+        net_units, invested, realized_pl = 0, 0, 0
+        cash_flows, navs, buy_lots = [], [], []
 
         for t in sorted(txns, key=lambda x: x['date']):
             date = datetime.strptime(t['date'], "%d-%m-%Y")
-            nav = t['nav']
-            units = t['units']
-            tx_type = t['type']
+            nav, units, tx_type = t['nav'], t['units'], t['type']
 
             if tx_type == 'buy':
                 net_units += units
@@ -158,94 +149,97 @@ def generate_summary(transactions):
                 buy_lots.append({'units': units, 'nav': nav})
                 cash_flows.append((date, -nav * units))
                 navs.append(nav)
-
             elif tx_type == 'sell':
                 net_units -= units
                 cash_flows.append((date, nav * units))
-                remaining_to_sell = units
-                while remaining_to_sell > 0 and buy_lots:
+                remaining = units
+                while remaining > 0 and buy_lots:
                     lot = buy_lots[0]
-                    if lot['units'] <= remaining_to_sell:
-                        gain = (nav - lot['nav']) * lot['units']
-                        realized_pl += gain
-                        remaining_to_sell -= lot['units']
+                    if lot['units'] <= remaining:
+                        realized_pl += (nav - lot['nav']) * lot['units']
+                        remaining -= lot['units']
                         buy_lots.pop(0)
                     else:
-                        gain = (nav - lot['nav']) * remaining_to_sell
-                        realized_pl += gain
-                        lot['units'] -= remaining_to_sell
-                        remaining_to_sell = 0
+                        realized_pl += (nav - lot['nav']) * remaining
+                        lot['units'] -= remaining
+                        remaining = 0
 
         current_value = net_units * latest_nav
         unrealized_pl = current_value - sum(lot['units'] * lot['nav'] for lot in buy_lots)
-
-        # Update totals by asset_type
-        totals_by_type[asset_type]["invested"] += invested
-        totals_by_type[asset_type]["current"] += current_value
-        totals_by_type[asset_type]["realized"] += realized_pl
-        totals_by_type[asset_type]["unrealized"] += unrealized_pl
-        totals_by_type[asset_type]["portfolio_value"] += current_value
+        totals = totals_by_type[asset_type]
+        totals["invested"] += invested
+        totals["current"] += current_value
+        totals["realized"] += realized_pl
+        totals["unrealized"] += unrealized_pl
+        totals["portfolio_value"] += current_value
 
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
         pct_change = ((latest_nav - avg_nav) / avg_nav * 100) if avg_nav else 0
         pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
-        min_nav = min(navs) if navs else 0
-        max_nav = max(navs) if navs else 0
+        min_nav, max_nav = min(navs, default=0), max(navs, default=0)
 
         cash_flows.append((today, current_value))
         rate = xirr(cash_flows)
         xirr_result = percent(rate * 100) if rate else "N/A"
 
-        grouped_output[asset_type].append([
-            scheme_name,
-            round2(latest_nav),
-            round2(net_units),
-            format_in_indian_system(invested, symbol=currency_symbol),
-            format_in_indian_system(current_value, symbol=currency_symbol),
-            format_in_indian_system(realized_pl, symbol=currency_symbol),
-            format_in_indian_system(unrealized_pl, symbol=currency_symbol),
-            round2(avg_nav),
-            percent(pct_change),
-            percent(pct_portfolio),
-            xirr_result,
-            f"{min_nav:,.2f}",
-            f"{max_nav:,.2f}"
-        ])
+        grouped_data[asset_type].append({
+            "scheme_name": scheme_name,
+            "latest_nav": round2(latest_nav),
+            "units": round2(net_units),
+            "invested": invested,
+            "current_value": current_value,
+            "realized_pl": realized_pl,
+            "unrealized_pl": unrealized_pl,
+            "avg_nav": round2(avg_nav),
+            "pct_change": percent(pct_change),
+            "pct_portfolio": percent(pct_portfolio),
+            "xirr": xirr_result,
+            "min_nav": f"{min_nav:,.2f}",
+            "max_nav": f"{max_nav:,.2f}",
+            "scheme_code": scheme_code
+        })
 
-    # Prepare final output string with headers per asset_type
-    currency_symbol = "₹" if asset_type in ("mutual_fund", "indian_equity") else "A$"
+    # Generate HTML
+    html = "<h2>📊 Portfolio Summary</h2>\n"
+    for asset_type, rows in grouped_data.items():
+        totals = totals_by_type[asset_type]
+        currency = "₹" if asset_type in ('mutual_fund', 'indian_equity') else "A$"
+        html += f"<h3>{asset_type.replace('_', ' ').title()}</h3>\n"
 
-    headers = [
-        "Fund", "Latest NAV", "Units", f"Invested {currency_symbol}", f"Current {currency_symbol}",
-        f"Realized P/L {currency_symbol}", f"Unrealized P/L{currency_symbol}", "Avg Purchase NAV",
-        "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
-    ]
+        # Summary table
+        html += "<table border='1' cellpadding='5' cellspacing='0'>\n<thead><tr>"
+        headers = ["Fund", "Latest NAV", "Units", f"Invested {currency}", f"Current {currency}",
+                   "Realized P/L", "Unrealized P/L", "Avg Purchase NAV", "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"]
+        for col in headers:
+            html += f"<th>{escape(col)}</th>"
+        html += "</tr></thead>\n<tbody>"
 
-    final_output = "📊 Portfolio Summary:\n\n"
-    for asset_type, rows in grouped_output.items():
-        rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
-        
-        # Choose currency symbol
-        if asset_type == "aus_equity":
-            currency_symbol = "A$"
-        else:
-            currency_symbol = "₹"
-        
+        for row in sorted(rows, key=lambda r: r["invested"], reverse=True):
+            html += "<tr>"
+            html += f"<td>{escape(row['scheme_name'])}</td>"
+            html += f"<td>{row['latest_nav']}</td>"
+            html += f"<td>{row['units']}</td>"
+            html += f"<td>{format_currency(row['invested'], asset_type)}</td>"
+            html += f"<td>{format_currency(row['current_value'], asset_type)}</td>"
+            html += f"<td>{format_currency(row['realized_pl'], asset_type)}</td>"
+            html += f"<td>{format_currency(row['unrealized_pl'], asset_type)}</td>"
+            html += f"<td>{row['avg_nav']}</td>"
+            html += f"<td>{row['pct_change']}</td>"
+            html += f"<td>{row['pct_portfolio']}</td>"
+            html += f"<td>{row['xirr']}</td>"
+            html += f"<td>{row['min_nav']}</td>"
+            html += f"<td>{row['max_nav']}</td>"
+            html += "</tr>"
 
-        # Add total row per asset_type
-        total = totals_by_type[asset_type]
-        rows.append([
-            "**Total**", "", "", 
-            format_in_indian_system(total["invested"], symbol=currency_symbol),
-            format_in_indian_system(total["current"], symbol=currency_symbol),
-            format_in_indian_system(total["realized"], symbol=currency_symbol),
-            format_in_indian_system(total["unrealized"], symbol=currency_symbol),
-            "", "", "", "", "", ""
-        ])
+        html += "<tr style='font-weight: bold; background-color: #f0f0f0;'>"
+        html += f"<td>Total</td><td colspan='2'></td>"
+        html += f"<td>{format_currency(totals['invested'], asset_type)}</td>"
+        html += f"<td>{format_currency(totals['current'], asset_type)}</td>"
+        html += f"<td>{format_currency(totals['realized'], asset_type)}</td>"
+        html += f"<td>{format_currency(totals['unrealized'], asset_type)}</td>"
+        html += "<td colspan='6'></td></tr>"
 
-        final_output += f"### {asset_type.replace('_', ' ').title()} ###\n"
-        final_output += tabulate(rows, headers=headers, tablefmt="grid")
-        final_output += "\n\n"
+        html += "</tbody></table><br>"
 
-    return final_output
+    return html
 
