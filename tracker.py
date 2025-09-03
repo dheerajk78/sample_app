@@ -270,7 +270,8 @@ def generate_summary_data(transactions):
             "realized": 0,
             "unrealized": 0
         },
-        "currency": "₹"  # default currency, can override below
+        "currency": "₹", # default currency, can override below
+        "display_name": "Asset"
     })
 
     # 1. Get total portfolio value (used for % allocation)
@@ -298,7 +299,7 @@ def generate_summary_data(transactions):
 
         # Override currency for this asset_type if mapped
         summary_data[asset_type]["currency"] = currency_map.get(asset_type, "₹")
-        
+        summary_data[asset_type]["display_name"] = asset_type.replace('_', ' ').title()
         net_units = 0
         invested = 0
         realized_pl = 0
