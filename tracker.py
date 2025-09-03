@@ -103,30 +103,34 @@ def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
 def generate_summary(transactions):
     today = datetime.today()
     total_portfolio_value = 0
-    latest_prices = {}
+    latest_navs = {}
 
-    total_invested = 0
-    total_current = 0
-    total_realized = 0
-    total_unrealized = 0
+    # Store results by asset_type
+    grouped_output = defaultdict(list)
+    totals_by_type = defaultdict(lambda: {
+        "invested": 0,
+        "current": 0,
+        "realized": 0,
+        "unrealized": 0,
+        "portfolio_value": 0
+    })
 
-    # First Pass — fetch latest prices and compute total portfolio value
+    # First, calculate total portfolio value (needed for % portfolio calculation)
     for scheme_code, txns in transactions.items():
-        asset_type = txns[0]['asset_type']
-        latest_price = fetch_latest_price(asset_type, scheme_code)
-        if latest_price is None:
+        asset_type = txns[0].get('asset_type', 'unknown')
+        latest_nav = fetch_latest_price(asset_type, scheme_code.strip())
+        if latest_nav is None:
             continue
         net_units = sum(t['units'] if t['type'] == 'buy' else -t['units'] for t in txns)
-        total_portfolio_value += net_units * latest_price
-        latest_prices[scheme_code] = latest_price
+        total_portfolio_value += net_units * latest_nav
+        latest_navs[scheme_code] = latest_nav
 
-    output_rows = []
-
+    # Now process each scheme grouped by asset_type
     for scheme_code, txns in transactions.items():
+        asset_type = txns[0].get('asset_type', 'unknown')
         scheme_name = txns[0]['scheme_name']
-        asset_type = txns[0]['asset_type']
-        latest_price = latest_prices.get(scheme_code)
-        if latest_price is None:
+        latest_nav = latest_navs.get(scheme_code)
+        if latest_nav is None:
             continue
 
         net_units = 0
@@ -148,6 +152,7 @@ def generate_summary(transactions):
                 buy_lots.append({'units': units, 'nav': nav})
                 cash_flows.append((date, -nav * units))
                 navs.append(nav)
+
             elif tx_type == 'sell':
                 net_units -= units
                 cash_flows.append((date, nav * units))
@@ -165,16 +170,18 @@ def generate_summary(transactions):
                         lot['units'] -= remaining_to_sell
                         remaining_to_sell = 0
 
-        current_value = net_units * latest_price
+        current_value = net_units * latest_nav
         unrealized_pl = current_value - sum(lot['units'] * lot['nav'] for lot in buy_lots)
 
-        total_invested += invested
-        total_current += current_value
-        total_realized += realized_pl
-        total_unrealized += unrealized_pl
+        # Update totals by asset_type
+        totals_by_type[asset_type]["invested"] += invested
+        totals_by_type[asset_type]["current"] += current_value
+        totals_by_type[asset_type]["realized"] += realized_pl
+        totals_by_type[asset_type]["unrealized"] += unrealized_pl
+        totals_by_type[asset_type]["portfolio_value"] += current_value
 
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
-        pct_change = ((latest_price - avg_nav) / avg_nav * 100) if avg_nav else 0
+        pct_change = ((latest_nav - avg_nav) / avg_nav * 100) if avg_nav else 0
         pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
         min_nav = min(navs) if navs else 0
         max_nav = max(navs) if navs else 0
@@ -183,9 +190,9 @@ def generate_summary(transactions):
         rate = xirr(cash_flows)
         xirr_result = percent(rate * 100) if rate else "N/A"
 
-        output_rows.append([
+        grouped_output[asset_type].append([
             scheme_name,
-            round2(latest_price),
+            round2(latest_nav),
             round2(net_units),
             format_in_indian_system(invested),
             format_in_indian_system(current_value),
@@ -199,22 +206,31 @@ def generate_summary(transactions):
             f"{max_nav:,.2f}"
         ])
 
-    # Append Total row
-    output_rows.append([
-        "**Total**", "", "", 
-        format_in_indian_system(total_invested),
-        format_in_indian_system(total_current),
-        format_in_indian_system(total_realized),
-        format_in_indian_system(total_unrealized),
-        "", "", "", "", "", ""
-    ])
-
+    # Prepare final output string with headers per asset_type
     headers = [
-        "Fund", "Latest Price", "Units", "Invested ₹", "Current ₹",
+        "Fund", "Latest NAV", "Units", "Invested ₹", "Current ₹",
         "Realized P/L", "Unrealized P/L", "Avg Purchase NAV",
         "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
     ]
 
-    output_rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
-    summary_str = "\n📊 Portfolio Summary:\n\n" + tabulate(output_rows, headers=headers, tablefmt="grid")
-    return summary_str
+    final_output = "📊 Portfolio Summary:\n\n"
+    for asset_type, rows in grouped_output.items():
+        rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
+
+        # Add total row per asset_type
+        total = totals_by_type[asset_type]
+        rows.append([
+            "**Total**", "", "", 
+            format_in_indian_system(total["invested"]),
+            format_in_indian_system(total["current"]),
+            format_in_indian_system(total["realized"]),
+            format_in_indian_system(total["unrealized"]),
+            "", "", "", "", "", ""
+        ])
+
+        final_output += f"### {asset_type.replace('_', ' ').title()} ###\n"
+        final_output += tabulate(rows, headers=headers, tablefmt="grid")
+        final_output += "\n\n"
+
+    return final_output
+
