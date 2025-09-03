@@ -39,7 +39,7 @@
     <!-- <div>
     {{ summary_text | safe }}
     </div> -->
- {% for asset_type, data in summary_data.items() %}
+<!-- {% for asset_type, data in summary_data.items() %}
 <details open>
   <summary style="font-weight: bold; font-size: 1.1em;">
     {{ data.display_name }} ({{ data.currency }})
@@ -98,7 +98,55 @@
 </details>
 
 <br>
+{% endfor %} -->
+  <h2>📊 Portfolio Summary</h2>
+
+{% for asset_type, data in summary_data.items() %}
+    <div class="asset-section">
+        <h3 style="cursor: pointer;" onclick="toggleSection('{{ asset_type }}')">
+            ▶️ {{ asset_type.replace('_', ' ').title() }}
+        </h3>
+
+        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Fund</th>
+                    <th>Latest NAV</th>
+                    <th>Units</th>
+                    <th>Invested</th>
+                    <th>Current</th>
+                    <th>Realized P/L</th>
+                    <th>Unrealized P/L</th>
+                    <th>Avg Purchase NAV</th>
+                    <th>% Return</th>
+                    <th>% Portfolio</th>
+                    <th>XIRR</th>
+                    <th>Min NAV</th>
+                    <th>Max NAV</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Total row (always visible) -->
+                <tr style="background-color: #f2f2f2;">
+                    {% for cell in data.total_row %}
+                        <td><strong>{{ cell }}</strong></td>
+                    {% endfor %}
+                </tr>
+
+                <!-- Individual scheme rows (hidden initially) -->
+                {% for row in data.rows %}
+                    <tr class="scheme-row {{ asset_type }}" style="display: none;">
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <br>
 {% endfor %}
+
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
     <form action="{{ url_for('main.upload') }}" method="get">
         <button type="submit">⬆️ Upload New Transactions</button>
@@ -173,6 +221,16 @@
       });
     });
   });
+</script>
+  <script>
+function toggleSection(assetType) {
+    const rows = document.querySelectorAll(`.scheme-row.${assetType}`);
+    const anyVisible = Array.from(rows).some(row => row.style.display !== "none");
+
+    rows.forEach(row => {
+        row.style.display = anyVisible ? "none" : "table-row";
+    });
+}
 </script>
 </body>
 </html>
