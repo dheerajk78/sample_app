@@ -32,7 +32,8 @@ def summary():
 
         # Portfolio summary
         #summary_text = get_portfolio_summary(file_obj)
-        summary_text = get_portfolio_summary(get_storage_backend(), filename=CSV_FILENAME)
+        #summary_text = get_portfolio_summary(get_storage_backend(), filename=CSV_FILENAME)
+        summary_data = get_portfolio_summary(get_storage_backend(), filename=CSV_FILENAME)
 
 
         # Read again for table
@@ -61,7 +62,8 @@ def summary():
 
         return render_template(
             "summary.html",
-            summary_text=summary_text,
+            #summary_text=summary_text,
+            summary_data=summary_data,
             transaction_header=transaction_header,
             transaction_data=paged_data,
             page=page,
