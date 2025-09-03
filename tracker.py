@@ -115,11 +115,6 @@ def generate_summary(transactions):
         "portfolio_value": 0
     })
 
-    # Choose currency symbol
-    if asset_type == "aus_equity":
-        currency_symbol = "A$"
-    else:
-        currency_symbol = "₹"
     # First, calculate total portfolio value (needed for % portfolio calculation)
     for scheme_code, txns in transactions.items():
         asset_type = txns[0].get('asset_type', 'unknown')
@@ -218,15 +213,24 @@ def generate_summary(transactions):
         ])
 
     # Prepare final output string with headers per asset_type
+    currency_symbol = "₹" if asset_type in ("mutual_fund", "indian_equity") else "A$"
+
     headers = [
-        "Fund", "Latest NAV", "Units", "Invested ₹", "Current ₹",
-        "Realized P/L", "Unrealized P/L", "Avg Purchase NAV",
+        "Fund", "Latest NAV", "Units", f"Invested {currency_symbol}", f"Current {currency_symbol}",
+        f"Realized P/L {currency_symbol}", f"Unrealized P/L{currency_symbol}", "Avg Purchase NAV",
         "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
     ]
 
     final_output = "📊 Portfolio Summary:\n\n"
     for asset_type, rows in grouped_output.items():
         rows.sort(key=lambda row: parse_indian_value(row[3]), reverse=True)
+        
+        # Choose currency symbol
+        if asset_type == "aus_equity":
+            currency_symbol = "A$"
+        else:
+            currency_symbol = "₹"
+        
 
         # Add total row per asset_type
         total = totals_by_type[asset_type]
