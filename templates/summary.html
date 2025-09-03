@@ -39,39 +39,66 @@
     <!-- <div>
     {{ summary_text | safe }}
     </div> -->
-  <div class="summary-tables">
-  {% for asset in summary_data %}
-    <div class="asset-group">
-      <button class="collapsible">{{ asset.asset_type }} — Total: {{ asset.total_row[3] }} (Invested)</button>
-      <div class="content">
-        <table border="1" cellpadding="5" cellspacing="0">
-          <thead>
-            <tr>
-              {% for col in asset.headers %}
-                <th>{{ col }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in asset.rows %}
-              <tr>
-                {% for cell in row %}
-                  <td>{{ cell }}</td>
-                {% endfor %}
-              </tr>
-            {% endfor %}
-            <tr style="font-weight: bold;">
-              {% for cell in asset.total_row %}
-                <td>{{ cell }}</td>
-              {% endfor %}
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% endfor %}
-</div>
+ {% for asset_type, data in summary_data.items() %}
+<details open>
+  <summary style="font-weight: bold; font-size: 1.1em;">
+    {{ data.display_name }} ({{ data.currency }})
+  </summary>
+  
+  <table border="1" cellpadding="6" cellspacing="0" style="margin-top: 10px; width: 100%;">
+    <thead style="background-color: #f0f0f0;">
+      <tr>
+        <th>Fund</th>
+        <th>Latest NAV</th>
+        <th>Units</th>
+        <th>Invested</th>
+        <th>Current</th>
+        <th>Realized P/L</th>
+        <th>Unrealized P/L</th>
+        <th>Avg NAV</th>
+        <th>% Return</th>
+        <th>% Portfolio</th>
+        <th>XIRR</th>
+        <th>Min NAV</th>
+        <th>Max NAV</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data.rows %}
+      <tr>
+        <td>{{ row.scheme_name }}</td>
+        <td>{{ row.latest_nav }}</td>
+        <td>{{ row.units }}</td>
+        <td>{{ row.invested | format_currency(data.currency) }}</td>
+        <td>{{ row.current | format_currency(data.currency) }}</td>
+        <td>{{ row.realized | format_currency(data.currency) }}</td>
+        <td>{{ row.unrealized | format_currency(data.currency) }}</td>
+        <td>{{ row.avg_nav }}</td>
+        <td>{{ row.percent_return }}</td>
+        <td>{{ row.percent_portfolio }}</td>
+        <td>{{ row.xirr }}</td>
+        <td>{{ row.min_nav }}</td>
+        <td>{{ row.max_nav }}</td>
+      </tr>
+      {% endfor %}
 
+      <!-- Totals Row -->
+      <tr style="font-weight: bold; background-color: #e8f5e9;">
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td>{{ data.totals.invested | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.current | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.realized | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.unrealized | format_currency(data.currency) }}</td>
+        <td colspan="6"></td>
+      </tr>
+    </tbody>
+  </table>
+</details>
+
+<br>
+{% endfor %}
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
     <form action="{{ url_for('main.upload') }}" method="get">
         <button type="submit">⬆️ Upload New Transactions</button>
