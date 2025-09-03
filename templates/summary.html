@@ -68,14 +68,14 @@
       <tr>
         <td>{{ row.scheme_name }}</td>
         <td>{{ row.latest_nav }}</td>
-        <td>{{ row.units }}</td>
+        <td>{{ row.net_units }}</td>
         <td>{{ row.invested | format_currency(data.currency) }}</td>
-        <td>{{ row.current | format_currency(data.currency) }}</td>
-        <td>{{ row.realized | format_currency(data.currency) }}</td>
-        <td>{{ row.unrealized | format_currency(data.currency) }}</td>
+        <td>{{ row.current_value | format_currency(data.currency) }}</td>
+        <td>{{ row.realized_pl | format_currency(data.currency) }}</td>
+        <td>{{ row.unrealized_pl | format_currency(data.currency) }}</td>
         <td>{{ row.avg_nav }}</td>
-        <td>{{ row.percent_return }}</td>
-        <td>{{ row.percent_portfolio }}</td>
+        <td>{{ row.pct_change }}</td>
+        <td>{{ row.pct_portfolio }}</td>
         <td>{{ row.xirr }}</td>
         <td>{{ row.min_nav }}</td>
         <td>{{ row.max_nav }}</td>
@@ -88,9 +88,9 @@
         <td></td>
         <td></td>
         <td>{{ data.totals.invested | format_currency(data.currency) }}</td>
-        <td>{{ data.totals.current | format_currency(data.currency) }}</td>
-        <td>{{ data.totals.realized | format_currency(data.currency) }}</td>
-        <td>{{ data.totals.unrealized | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.current_value | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.realized_pl | format_currency(data.currency) }}</td>
+        <td>{{ data.totals.unrealized_pl | format_currency(data.currency) }}</td>
         <td colspan="6"></td>
       </tr>
     </tbody>
