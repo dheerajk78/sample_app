@@ -8,11 +8,69 @@
 
 <head>
     <title>Portfolio Summary</title>
+    <style>
+  .collapsible {
+    background-color: #f1f1f1;
+    color: #444;
+    cursor: pointer;
+    padding: 12px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+
+  .collapsible.active, .collapsible:hover {
+    background-color: #ddd;
+  }
+
+  .content {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+</style>
 </head>
 <body>
-    <div>
+    <!-- <div>
     {{ summary_text | safe }}
+    </div> -->
+  <div class="summary-tables">
+  {% for asset in summary_data %}
+    <div class="asset-group">
+      <button class="collapsible">{{ asset.asset_type }} — Total: {{ asset.total_row[3] }} (Invested)</button>
+      <div class="content">
+        <table border="1" cellpadding="5" cellspacing="0">
+          <thead>
+            <tr>
+              {% for col in asset.headers %}
+                <th>{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in asset.rows %}
+              <tr>
+                {% for cell in row %}
+                  <td>{{ cell }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+            <tr style="font-weight: bold;">
+              {% for cell in asset.total_row %}
+                <td>{{ cell }}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  {% endfor %}
+</div>
 
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
     <form action="{{ url_for('main.upload') }}" method="get">
@@ -73,5 +131,21 @@
         <a href="{{ url_for('main.summary', page=page+1) }}">Next ➡️</a>
     {% endif %}
 </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const collapsibles = document.querySelectorAll(".collapsible");
+    collapsibles.forEach(button => {
+      button.addEventListener("click", function() {
+        this.classList.toggle("active");
+        const content = this.nextElementSibling;
+        if (content.style.display === "block") {
+          content.style.display = "none";
+        } else {
+          content.style.display = "block";
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>
