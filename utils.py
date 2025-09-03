@@ -71,7 +71,25 @@ def parse_indian_value(s):
     else:
         # Fallback to raw float if no known currency symbol
         return float(s.replace(",", ""))
-        
+
+def format_currency(value, currency_symbol="₹"):
+    try:
+        if currency_symbol == "A$":
+            return f"A${value:,.2f}"
+        elif currency_symbol == "₹":
+            if value >= 1e7:
+                return f"₹{value / 1e7:.2f} Cr"
+            elif value >= 1e5:
+                return f"₹{value / 1e5:.2f} L"
+            else:
+                return f"₹{value:,.2f}"
+        else:
+            return f"{currency_symbol}{value:,.2f}"
+    except Exception:
+        return value
+
+app.jinja_env.filters["format_currency"] = format_currency
+
 '''def format_in_indian_system(value):
     if value >= 1e7:
         return f"₹{value / 1e7:.2f} Cr"
