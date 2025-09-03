@@ -88,8 +88,6 @@ def format_currency(value, currency_symbol="₹"):
     except Exception:
         return value
 
-app.jinja_env.filters["format_currency"] = format_currency
-
 '''def format_in_indian_system(value):
     if value >= 1e7:
         return f"₹{value / 1e7:.2f} Cr"
