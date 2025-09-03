@@ -109,7 +109,7 @@ def format_currency(value, asset_type):
         return f"{symbol}{value:,.2f}" 
     else:
         return f"{value:,.2f}"
-        
+'''        
 def generate_summary_html(transactions):
     today = datetime.today()
     total_portfolio_value = 0
@@ -247,3 +247,112 @@ def generate_summary_html(transactions):
 <br>
 """
     return html_output
+'''
+def generate_summary_data(transactions):
+    today = datetime.today()
+    latest_prices = {}
+    total_portfolio_value = 0
+
+    summary_data = defaultdict(lambda: {
+        "rows": [],
+        "totals": {
+            "invested": 0,
+            "current": 0,
+            "realized": 0,
+            "unrealized": 0
+        }
+    })
+
+    # 1. Get total portfolio value (used for % allocation)
+    for scheme_code, txns in transactions.items():
+        asset_type = txns[0].get("asset_type", "unknown")
+        scheme_code = scheme_code.strip()
+        latest_price = fetch_latest_price(asset_type, scheme_code)
+        if latest_price is None:
+            continue
+        net_units = sum(t["units"] if t["type"] == "buy" else -t["units"] for t in txns)
+        total_portfolio_value += net_units * latest_price
+        latest_prices[scheme_code] = latest_price
+
+    # 2. Process each scheme
+    for scheme_code, txns in transactions.items():
+        asset_type = txns[0].get("asset_type", "unknown")
+        scheme_code = scheme_code.strip()
+        scheme_name = txns[0]["scheme_name"]
+        latest_price = latest_prices.get(scheme_code)
+        if latest_price is None:
+            continue
+
+        net_units = 0
+        invested = 0
+        realized_pl = 0
+        cash_flows = []
+        buy_lots = []
+        navs = []
+
+        for t in sorted(txns, key=lambda x: x["date"]):
+            date = datetime.strptime(t["date"], "%d-%m-%Y")
+            nav = t["nav"]
+            units = t["units"]
+            tx_type = t["type"]
+
+            if tx_type == "buy":
+                net_units += units
+                invested += nav * units
+                buy_lots.append({"units": units, "nav": nav})
+                cash_flows.append((date, -nav * units))
+                navs.append(nav)
+
+            elif tx_type == "sell":
+                net_units -= units
+                cash_flows.append((date, nav * units))
+                remaining = units
+                while remaining > 0 and buy_lots:
+                    lot = buy_lots[0]
+                    if lot["units"] <= remaining:
+                        gain = (nav - lot["nav"]) * lot["units"]
+                        realized_pl += gain
+                        remaining -= lot["units"]
+                        buy_lots.pop(0)
+                    else:
+                        gain = (nav - lot["nav"]) * remaining
+                        realized_pl += gain
+                        lot["units"] -= remaining
+                        remaining = 0
+
+        current_value = net_units * latest_price
+        unrealized_pl = current_value - sum(lot["units"] * lot["nav"] for lot in buy_lots)
+        avg_nav = (sum(lot["units"] * lot["nav"] for lot in buy_lots) / net_units) if net_units else 0
+        pct_change = ((latest_price - avg_nav) / avg_nav * 100) if avg_nav else 0
+        pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
+        min_nav = min(navs) if navs else 0
+        max_nav = max(navs) if navs else 0
+
+        cash_flows.append((today, current_value))
+        rate = xirr(cash_flows)
+        xirr_result = percent(rate * 100) if rate else "N/A"
+
+        row = {
+            "scheme_name": scheme_name,
+            "latest_nav": round2(latest_price),
+            "net_units": round2(net_units),
+            "invested": invested,
+            "current_value": current_value,
+            "realized_pl": realized_pl,
+            "unrealized_pl": unrealized_pl,
+            "avg_nav": round2(avg_nav),
+            "pct_change": percent(pct_change),
+            "pct_portfolio": percent(pct_portfolio),
+            "xirr": xirr_result,
+            "min_nav": f"{min_nav:,.2f}",
+            "max_nav": f"{max_nav:,.2f}",
+        }
+
+        summary_data[asset_type]["rows"].append(row)
+        # update totals
+        summary_data[asset_type]["totals"]["invested"] += invested
+        summary_data[asset_type]["totals"]["current"] += current_value
+        summary_data[asset_type]["totals"]["realized"] += realized_pl
+        summary_data[asset_type]["totals"]["unrealized"] += unrealized_pl
+
+    return summary_data
