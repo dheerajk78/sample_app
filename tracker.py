@@ -104,7 +104,8 @@ def format_currency(value, asset_type):
     if asset_type in ('mutual_fund', 'indian_equity'):
         return format_in_indian_system(value)
     elif asset_type == 'aus_equity':
-        return format_in_aud_system(value)
+        symbol="A$"
+        return f"{symbol}{value:,.2f}" 
     else:
         return f"{value:,.2f}"
         
