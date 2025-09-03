@@ -129,17 +129,38 @@
                 <!-- Total row (always visible) -->
                 <tr style="background-color: #f2f2f2;">
                     {% for cell in data.totals %}
-                        <td><strong>{{ cell }}</strong></td>
+                         {% set fields = ['invested', 'current', 'realized', 'unrealized'] %}
+              
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                    <td></td>
+                    {% for field in fields %}
+                        <td><strong>{{ data.totals[field] | format_currency(data.currency) }}</strong></td>
                     {% endfor %}
+                    <td colspan="6"></td>
+                    {% endfor %}
+                 
                 </tr>
+               
 
                 <!-- Individual scheme rows (hidden initially) -->
-                {% for row in data.rows %}
-                    <tr class="scheme-row {{ asset_type }}" style="display: none;">
-                        {% for cell in row %}
-                            <td>{{ cell }}</td>
-                        {% endfor %}
-                    </tr>
+      
+               {% for row in data.rows %}
+                <tr class="scheme-row {{ asset_type }}" style="display: none;">
+                  <td>{{ row.scheme_name }}</td>
+                  <td>{{ row.latest_nav }}</td>
+                  <td>{{ row.net_units }}</td>
+                  <td>{{ row.invested | format_currency(data.currency) }}</td>
+                  <td>{{ row.current_value | format_currency(data.currency) }}</td>
+                  <td>{{ row.realized_pl | format_currency(data.currency) }}</td>
+                  <td>{{ row.unrealized_pl | format_currency(data.currency) }}</td>
+                  <td>{{ row.avg_nav }}</td>
+                  <td>{{ row.pct_change }}</td>
+                  <td>{{ row.pct_portfolio }}</td>
+                  <td>{{ row.xirr }}</td>
+                  <td>{{ row.min_nav }}</td>
+                  <td>{{ row.max_nav }}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
