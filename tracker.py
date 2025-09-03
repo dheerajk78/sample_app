@@ -7,6 +7,7 @@ from datetime import datetime
 from tabulate import tabulate
 from typing import IO
 from io import StringIO
+from bs4 import BeautifulSoup
 
 from utils import round2, percent, format_in_indian_system, parse_indian_value
 from storage import get_storage_backend
