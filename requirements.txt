@@ -7,3 +7,4 @@ xirr
 google-cloud-storage
 google-cloud-firestore
 yfinance
+bf
