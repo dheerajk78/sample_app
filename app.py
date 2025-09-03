@@ -42,7 +42,7 @@ def format_currency(value, currency_symbol="₹"):
         return value
 
 # Register filter with Jinja
-app.jinja_env.filters["format_currency"] = format_curre
+app.jinja_env.filters["format_currency"] = format_currency
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
