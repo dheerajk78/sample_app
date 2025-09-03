@@ -1,27 +1,24 @@
 # tracker.py
 import csv
 import requests
+import yfinance as yf
 from collections import defaultdict
 from datetime import datetime
 from tabulate import tabulate
 from typing import IO
+from io import StringIO
 
 from utils import round2, percent, format_in_indian_system, parse_indian_value
 from storage import get_storage_backend
 
 def get_portfolio_summary(backend=None, filename="transactions.csv") -> str:
-    """
-    Loads data using the active backend and generates the summary string.
-    """
     backend = backend or get_storage_backend()
     header, rows = backend.load_csv(filename)
-    
+
     if not header or not rows:
         return "⚠️ No data found in transaction file."
 
-    # Convert set of tuples back to file-like CSV string for csv.DictReader
     csv_content = ",".join(header) + "\n" + "\n".join([",".join(row) for row in rows])
-    from io import StringIO
     return generate_summary(read_transactions(StringIO(csv_content)))
 
 
@@ -35,29 +32,38 @@ def read_transactions(file_obj: IO):
             'scheme_name': row['scheme_name'],
             'nav': float(row['nav']),
             'units': float(row['units']),
-            'type': row.get('type', 'buy').lower()
+            'type': row.get('type', 'buy').lower(),
+            'asset_type': row.get('asset_type', 'mutual_fund')  # default if missing
         })
     return transactions
 
 
-def fetch_latest_nav(scheme_code):
-    url = f"https://api.mfapi.in/mf/{scheme_code}/latest"
+def fetch_latest_price(asset_type, scheme_code):
     try:
-        response = requests.get(url, timeout=10)
-        data = response.json()
-        return float(data['data'][0]['nav'])
+        if asset_type == 'mutual_fund':
+            url = f"https://api.mfapi.in/mf/{scheme_code}/latest"
+            response = requests.get(url, timeout=10)
+            data = response.json()
+            return float(data['data'][0]['nav'])
+
+        elif asset_type in ('indian_equity', 'aus_equity'):
+            ticker = yf.Ticker(scheme_code)
+            price = ticker.history(period='1d')['Close'][-1]
+            return float(price)
+
+        else:
+            print(f"Unknown asset_type: {asset_type}")
+            return None
     except Exception as e:
-        print(f"Error fetching NAV for {scheme_code}: {e}")
+        print(f"Error fetching price for {scheme_code} ({asset_type}): {e}")
         return None
 
 
 def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
     def xnpv(rate):
-        return sum(cf / (1 + rate) ** ((date - cash_flows[0][0]).days / 365.0)
-                   for date, cf in cash_flows)
+        return sum(cf / (1 + rate) ** ((date - cash_flows[0][0]).days / 365.0) for date, cf in cash_flows)
 
-    low = -0.9999
-    high = 10
+    low, high = -0.9999, 10
     for _ in range(max_iterations):
         mid = (low + high) / 2
         npv = xnpv(mid)
@@ -73,27 +79,30 @@ def xirr(cash_flows, max_iterations=100, tolerance=1e-6):
 def generate_summary(transactions):
     today = datetime.today()
     total_portfolio_value = 0
-    latest_navs = {}
+    latest_prices = {}
 
     total_invested = 0
     total_current = 0
     total_realized = 0
     total_unrealized = 0
 
+    # First Pass — fetch latest prices and compute total portfolio value
     for scheme_code, txns in transactions.items():
-        latest_nav = fetch_latest_nav(scheme_code)
-        if latest_nav is None:
+        asset_type = txns[0]['asset_type']
+        latest_price = fetch_latest_price(asset_type, scheme_code)
+        if latest_price is None:
             continue
         net_units = sum(t['units'] if t['type'] == 'buy' else -t['units'] for t in txns)
-        total_portfolio_value += net_units * latest_nav
-        latest_navs[scheme_code] = latest_nav
+        total_portfolio_value += net_units * latest_price
+        latest_prices[scheme_code] = latest_price
 
     output_rows = []
 
     for scheme_code, txns in transactions.items():
         scheme_name = txns[0]['scheme_name']
-        latest_nav = latest_navs.get(scheme_code)
-        if latest_nav is None:
+        asset_type = txns[0]['asset_type']
+        latest_price = latest_prices.get(scheme_code)
+        if latest_price is None:
             continue
 
         net_units = 0
@@ -115,7 +124,6 @@ def generate_summary(transactions):
                 buy_lots.append({'units': units, 'nav': nav})
                 cash_flows.append((date, -nav * units))
                 navs.append(nav)
-
             elif tx_type == 'sell':
                 net_units -= units
                 cash_flows.append((date, nav * units))
@@ -133,16 +141,16 @@ def generate_summary(transactions):
                         lot['units'] -= remaining_to_sell
                         remaining_to_sell = 0
 
-        current_value = net_units * latest_nav
+        current_value = net_units * latest_price
         unrealized_pl = current_value - sum(lot['units'] * lot['nav'] for lot in buy_lots)
-        # Accumulate totals
+
         total_invested += invested
         total_current += current_value
         total_realized += realized_pl
         total_unrealized += unrealized_pl
-        
+
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
-        pct_change = ((latest_nav - avg_nav) / avg_nav * 100) if avg_nav else 0
+        pct_change = ((latest_price - avg_nav) / avg_nav * 100) if avg_nav else 0
         pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
         min_nav = min(navs) if navs else 0
         max_nav = max(navs) if navs else 0
@@ -153,7 +161,7 @@ def generate_summary(transactions):
 
         output_rows.append([
             scheme_name,
-            round2(latest_nav),
+            round2(latest_price),
             round2(net_units),
             format_in_indian_system(invested),
             format_in_indian_system(current_value),
@@ -166,7 +174,8 @@ def generate_summary(transactions):
             f"{min_nav:,.2f}",
             f"{max_nav:,.2f}"
         ])
-    # ➕ Append total row
+
+    # Append Total row
     output_rows.append([
         "**Total**", "", "", 
         format_in_indian_system(total_invested),
@@ -177,7 +186,7 @@ def generate_summary(transactions):
     ])
 
     headers = [
-        "Fund", "Latest NAV", "Units", "Invested ₹", "Current ₹",
+        "Fund", "Latest Price", "Units", "Invested ₹", "Current ₹",
         "Realized P/L", "Unrealized P/L", "Avg Purchase NAV",
         "% Return", "% Portfolio", "XIRR", "Min NAV", "Max NAV"
     ]
