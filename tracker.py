@@ -115,6 +115,11 @@ def generate_summary(transactions):
         "portfolio_value": 0
     })
 
+    # Choose currency symbol
+    if asset_type == "aus_equity":
+        currency_symbol = "A$"
+    else:
+        currency_symbol = "₹"
     # First, calculate total portfolio value (needed for % portfolio calculation)
     for scheme_code, txns in transactions.items():
         asset_type = txns[0].get('asset_type', 'unknown')
@@ -139,6 +144,12 @@ def generate_summary(transactions):
         cash_flows = []
         navs = []
         buy_lots = []
+
+         # Choose currency symbol
+        if asset_type == "aus_equity":
+            currency_symbol = "A$"
+        else:
+            currency_symbol = "₹"
 
         for t in sorted(txns, key=lambda x: x['date']):
             date = datetime.strptime(t['date'], "%d-%m-%Y")
@@ -194,10 +205,10 @@ def generate_summary(transactions):
             scheme_name,
             round2(latest_nav),
             round2(net_units),
-            format_in_indian_system(invested),
-            format_in_indian_system(current_value),
-            format_in_indian_system(realized_pl),
-            format_in_indian_system(unrealized_pl),
+            format_in_indian_system(invested, symbol=currency_symbol),
+            format_in_indian_system(current_value, symbol=currency_symbol),
+            format_in_indian_system(realized_pl, symbol=currency_symbol),
+            format_in_indian_system(unrealized_pl, symbol=currency_symbol),
             round2(avg_nav),
             percent(pct_change),
             percent(pct_portfolio),
@@ -221,10 +232,10 @@ def generate_summary(transactions):
         total = totals_by_type[asset_type]
         rows.append([
             "**Total**", "", "", 
-            format_in_indian_system(total["invested"]),
-            format_in_indian_system(total["current"]),
-            format_in_indian_system(total["realized"]),
-            format_in_indian_system(total["unrealized"]),
+            format_in_indian_system(total["invested"], symbol=currency_symbol),
+            format_in_indian_system(total["current"], symbol=currency_symbol),
+            format_in_indian_system(total["realized"], symbol=currency_symbol),
+            format_in_indian_system(total["unrealized"], symbol=currency_symbol),
             "", "", "", "", "", ""
         ])
 
