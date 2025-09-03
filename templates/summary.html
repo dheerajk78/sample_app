@@ -10,8 +10,9 @@
     <title>Portfolio Summary</title>
 </head>
 <body>
-    <h2>📊 Portfolio Summary</h2>
-    <pre>{{ summary_text }}</pre>
+    <div>
+    {{ summary_text | safe }}
+    </div>
 
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
     <form action="{{ url_for('main.upload') }}" method="get">
