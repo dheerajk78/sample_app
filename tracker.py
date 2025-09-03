@@ -130,6 +130,12 @@ def generate_summary(transactions):
 
         current_value = net_units * latest_nav
         unrealized_pl = current_value - sum(lot['units'] * lot['nav'] for lot in buy_lots)
+        # Accumulate totals
+        total_invested += invested
+        total_current += current_value
+        total_realized += realized_pl
+        total_unrealized += unrealized_pl
+        
         avg_nav = (sum(lot['units'] * lot['nav'] for lot in buy_lots) / net_units) if net_units else 0
         pct_change = ((latest_nav - avg_nav) / avg_nav * 100) if avg_nav else 0
         pct_portfolio = (current_value / total_portfolio_value * 100) if total_portfolio_value else 0
@@ -155,6 +161,15 @@ def generate_summary(transactions):
             f"{min_nav:,.2f}",
             f"{max_nav:,.2f}"
         ])
+    # ➕ Append total row
+    output_rows.append([
+        "**Total**", "", "", 
+        format_in_indian_system(total_invested),
+        format_in_indian_system(total_current),
+        format_in_indian_system(total_realized),
+        format_in_indian_system(total_unrealized),
+        "", "", "", "", "", ""
+    ])
 
     headers = [
         "Fund", "Latest NAV", "Units", "Invested ₹", "Current ₹",
