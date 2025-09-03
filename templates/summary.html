@@ -128,9 +128,7 @@
             <tbody>
                 <!-- Total row (always visible) -->
                 <tr style="background-color: #f2f2f2;">
-                    {% for cell in data.totals %}
-                         {% set fields = ['invested', 'current', 'realized', 'unrealized'] %}
-              
+                   {% set fields = ['invested', 'current', 'realized', 'unrealized'] %}
                     <td><strong>Total</strong></td>
                     <td></td>
                     <td></td>
@@ -138,11 +136,7 @@
                         <td><strong>{{ data.totals[field] | format_currency(data.currency) }}</strong></td>
                     {% endfor %}
                     <td colspan="6"></td>
-                    {% endfor %}
-                 
                 </tr>
-               
-
                 <!-- Individual scheme rows (hidden initially) -->
       
                {% for row in data.rows %}
