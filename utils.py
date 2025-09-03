@@ -38,7 +38,41 @@ def round2(x):
 def percent(x):
     return f"{round2(x)}%"
 
-def format_in_indian_system(value):
+def format_in_indian_system(value, symbol='₹'):
+    value = round(value, 2)
+
+    if symbol == '₹':
+        if value >= 1e7:
+            return f"{symbol}{value / 1e7:.2f} Cr"
+        elif value >= 1e5:
+            return f"{symbol}{value / 1e5:.2f} L"
+        else:
+            return f"{symbol}{value:,.2f}"
+    else:
+        # Standard formatting for AUD or others
+        return f"{symbol}{value:,.2f}"
+
+def parse_indian_value(s):
+    s = s.strip()
+
+    if s.startswith("₹"):
+        s = s.replace("₹", "").strip()
+        if "Cr" in s:
+            return float(s.replace("Cr", "").strip()) * 1e7
+        elif "L" in s:
+            return float(s.replace("L", "").strip()) * 1e5
+        else:
+            return float(s.replace(",", ""))
+    
+    elif s.startswith("A$"):
+        s = s.replace("A$", "").strip()
+        return float(s.replace(",", ""))
+    
+    else:
+        # Fallback to raw float if no known currency symbol
+        return float(s.replace(",", ""))
+        
+'''def format_in_indian_system(value):
     if value >= 1e7:
         return f"₹{value / 1e7:.2f} Cr"
     elif value >= 1e5:
@@ -54,4 +88,4 @@ def parse_indian_value(s):
         return float(s.replace("L", "").strip()) * 1e5
     else:
         return float(s.replace(",", ""))
-
+'''
