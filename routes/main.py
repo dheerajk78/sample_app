@@ -6,6 +6,7 @@ from storage.config import get_backend_type
 from google.cloud import storage
 import io, csv
 from datetime import datetime
+import traceback
 
 main_bp = Blueprint("main", __name__)
 
@@ -73,7 +74,8 @@ def summary():
         )
 
     except Exception as e:
-        return Response(f"❌ Error: {str(e)}", status=500)
+        full_trace = traceback.format_exc()
+        return Response(f"❌ Error:\n{full_trace}", status=500, mimetype='
 
 @main_bp.route("/upload", methods=["GET", "POST"])
 @login_required
