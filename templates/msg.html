@@ -3,5 +3,7 @@
 {% if msg %}
   <div style="padding: 10px; background-color: #e0ffe0; border: 1px solid green; margin-bottom: 20px;">
     {{ msg }}
+    <a href="{{ url_for('main.upload') }}">
+            <button type="button">❌ Cancel</button>
   </div>
 {% endif %}
