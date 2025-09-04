@@ -19,7 +19,9 @@ def get_portfolio_summary(backend=None, filename="transactions.csv") -> str:
     header, rows = backend.load_csv(filename)
 
     if not header or not rows:
-        return "⚠️ No data found in transaction file."
+        #return "⚠️ No data found in transaction file."
+        raise ValueError("No data found in transaction file.")
+
 
     csv_content = ",".join(header) + "\n" + "\n".join([",".join(row) for row in rows])
     #return generate_summary_html(read_transactions(StringIO(csv_content)))
