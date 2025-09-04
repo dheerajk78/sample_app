@@ -98,7 +98,10 @@
 </details>
 
 <br>
-{% endfor %} 
+{% else %}
+    <p style="color: #888;">⚠️ No portfolio data available.</p>
+{% endfor %}
+  
   <h2>📊 Portfolio Summary</h2>
 
 {% for asset_type, data in summary_data.items() %}
@@ -160,6 +163,8 @@
         </table>
     </div>
     <br>
+{% else %}
+    <p style="color: #888;">⚠️ No portfolio data available.</p>
 {% endfor %}
 
 <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
