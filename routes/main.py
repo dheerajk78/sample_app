@@ -75,7 +75,7 @@ def summary():
 
     except Exception as e:
         full_trace = traceback.format_exc()
-        return Response(f"❌ Error:\n{full_trace}", status=500, mimetype='
+        return Response(f"❌ Error:\n{full_trace}", status=500, mimetype='text/plain')
 
 @main_bp.route("/upload", methods=["GET", "POST"])
 @login_required
