@@ -74,8 +74,11 @@ def summary():
         )
 
     except Exception as e:
-        full_trace = traceback.format_exc()
-        return Response(f"❌ Error:\n{full_trace}", status=500, mimetype='text/plain')
+        #full_trace = traceback.format_exc()
+        #return Response(f"❌ Error:\n{full_trace}", status=500, mimetype='text/plain')
+    except ValueError as e:
+        return render_template("summary.html", msg=str(e), transaction_header=[], transaction_data=[], summary_data={},msg="",backend_type=get_backend_type())
+        
 
 @main_bp.route("/upload", methods=["GET", "POST"])
 @login_required
